@@ -14,7 +14,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.MountableFile;
+import br.ufmg.mes.shop.support.PostgresTestDatabase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,15 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FoundationIT {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74")
-            .withUrlParam("currentSchema", "shop")
-            .withDatabaseName("shop_test")
-            .withUsername("shop_test")
-            .withPassword("shop_test")
-            .withCopyFileToContainer(MountableFile.forClasspathResource("db/schema/V001__foundation.sql"),
-                    "/docker-entrypoint-initdb.d/V001__foundation.sql")
-            .withCopyFileToContainer(MountableFile.forClasspathResource("db/schema/V002__products.sql"),
-                    "/docker-entrypoint-initdb.d/V002__products.sql");
+    static final PostgreSQLContainer<?> POSTGRES = PostgresTestDatabase.create("foundation_test");
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
@@ -62,6 +54,6 @@ class FoundationIT {
         assertThat(health.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(health.getBody()).isEqualTo("{\"status\":\"UP\"}");
         assertThat(http.getForEntity("/actuator/env", String.class).getStatusCode())
-                .isEqualTo(HttpStatus.NOT_FOUND);
+                .isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 }

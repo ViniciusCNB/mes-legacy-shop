@@ -16,7 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -29,7 +29,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.MountableFile;
+import br.ufmg.mes.shop.support.PostgresTestDatabase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,16 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class CatalogIT {
 
     @Container
-    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
-            "postgres@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74")
-            .withUrlParam("currentSchema", "shop")
-            .withDatabaseName("catalog_test")
-            .withUsername("catalog_test")
-            .withPassword("catalog_test")
-            .withCopyFileToContainer(MountableFile.forClasspathResource("db/schema/V001__foundation.sql"),
-                    "/docker-entrypoint-initdb.d/V001__foundation.sql")
-            .withCopyFileToContainer(MountableFile.forClasspathResource("db/schema/V002__products.sql"),
-                    "/docker-entrypoint-initdb.d/V002__products.sql");
+    static final PostgreSQLContainer<?> POSTGRES = PostgresTestDatabase.create("catalog_test");
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
@@ -206,8 +197,9 @@ class CatalogIT {
     void refusesToStartWithAColumnMissingFromTheMappedSchema() {
         jdbc.execute("CREATE SCHEMA validation_probe");
         jdbc.execute("CREATE TABLE validation_probe.products (id BIGINT PRIMARY KEY)");
+        jdbc.execute("CREATE TABLE validation_probe.app_users (LIKE shop.app_users INCLUDING ALL)");
         try {
-            new ApplicationContextRunner()
+            new WebApplicationContextRunner()
                     .withInitializer(new ConfigDataApplicationContextInitializer())
                     .withUserConfiguration(ShopApplication.class)
                     .withPropertyValues(

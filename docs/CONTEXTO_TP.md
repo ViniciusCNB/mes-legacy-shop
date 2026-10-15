@@ -13,7 +13,7 @@ Pergunta orientadora: em que medida o Ark consegue migrar uma aplicação de Spr
 
 - Orientação acadêmica relatada: construir aplicação própria e estudar migração entre linhas do Boot. Não houve acesso independente ao email ou às notas da reunião.
 - Propostas técnicas do autor: e-commerce local, Java 17, Boot 2.7.18, PostgreSQL 16, regras e fases descritas na especificação. Não são requisitos adicionais atribuídos ao professor.
-- Pedido inicial do autor: implementar a Fundação com essa stack e os padrões da referência. Após o commit 502c36c, o autor autorizou a Fase 2, Catálogo, e solicitou a porta local 5432. As escolhas rotineiras executadas estão em DECISOES.md; não representam aprovação acadêmica individual.
+- Pedido inicial do autor: implementar a Fundação com essa stack e os padrões da referência. Após o commit 502c36c, o autor autorizou a Fase 2, Catálogo, e solicitou a porta local 5432. Após o commit f452ab5 da Fase 2, autorizou a Fase 3, Segurança e administração. As escolhas rotineiras executadas estão em DECISOES.md; não representam aprovação acadêmica individual.
 - Continuam propostas: protocolo experimental final, versões alvo, comparação com OpenRewrite/outros agentes e investigação de diagnósticos no Ark. Não há data de entrega definida no material.
 
 ## Ferramentas e limites

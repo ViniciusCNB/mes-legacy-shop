@@ -21,6 +21,7 @@ Após validar a aplicação, fixar versões concretas de Boot 3.5.x e 4.0.x, Ark
 ## Andamento em 15/10/2026
 
 - Fase 1 concluída e commitada pelo autor em 502c36c.
-- Fase 2 autorizada pelo autor: catálogo público e retorno da porta local PostgreSQL a 5432. Implementação e testes relacionados estão nesta alteração; resultados finais em STATUS.md.
-- A Fase 3 será o próximo passo, somente mediante nova solicitação: usuários, HTTP Basic/BCrypt, política de sessão/CSRF e administração de produtos/estoque.
-- Nenhum experimento Ark ou migração de framework é autorizado pelas duas primeiras fases.
+- Fase 2 concluída e commitada pelo autor em f452ab5; PostgreSQL local permanece em 5432.
+- Fase 3 autorizada nesta continuação: usuários, HTTP Basic/BCrypt, política de sessão/CSRF e administração de produtos/estoque. Entregas e verificações reais em STATUS.md.
+- Próximo passo, mediante nova solicitação: Fase 4, Pedidos, incluindo atomicidade, isolamento, cancelamento e concorrência.
+- Nenhum experimento Ark ou migração de framework é autorizado pelas três primeiras fases.

@@ -28,7 +28,7 @@ Data: 15/10/2026. Decisões rotineiras executadas pelo Codex dentro da autoriza�
 
 ## Reservado às próximas fases
 
-Estratégia de concorrência, DTOs/paginação de pedidos, semântica completa dos filtros e configuração Security/CSRF/sessão serão decididos nas próximas fases. DTOs, paginação e dados locais de produtos foram definidos na Fase 2. As regras da referência permanecem no contrato proposto, sem aprovação presumida de alterações. Não há decisão experimental final, execução Ark ou baseline/tag. O Codex não faz commits; o autor registrou a Fase 1 em 502c36c.
+Estratégia de concorrência, DTOs/paginação de pedidos, semântica completa dos filtros serão decididos nas próximas fases. A configuração Security/CSRF/sessão foi definida na Fase 3. DTOs, paginação e dados locais de produtos foram definidos na Fase 2. As regras da referência permanecem no contrato proposto, sem aprovação presumida de alterações. Não há decisão experimental final, execução Ark ou baseline/tag. O Codex não faz commits; o autor registrou a Fase 1 em 502c36c.
 
 ## Fase 2 — Catálogo
 
@@ -47,4 +47,30 @@ Autorizada pelo autor após o commit 502c36c da Fundação. Detalhes abaixo são
 | Testes reais sem dependências adicionais | FoundationIT preserva saúde e passa a inicializar V001/V002; CatalogIT cobre HTTP/JPA/constraints/validação de esquema em outro contêiner PostgreSQL. Schema inválido é criado somente em namespace descartável do teste; código e SQL reais permanecem corretos. |
 | Stack preservada | POM e versões da Fundação permanecem inalterados; nenhuma biblioteca nova foi necessária. |
 
-Resultados, incidentes do ambiente e limitações estão em STATUS.md. Segurança/administração ficam para a Fase 3; o protocolo experimental e a revisão acadêmica continuam separados da execução técnica.
+Resultados, incidentes do ambiente e limitações estão em STATUS.md. A seção acima registra o marco da Fase 2; segurança/administração foram autorizadas e implementadas na Fase 3; o protocolo experimental e a revisão acadêmica continuam separados da execução técnica.
+
+## Fase 3 — Segurança e administração
+
+Autorizada pelo autor após f452ab5. São decisões de implementação dentro desse escopo; não são novas exigências atribuídas ao professor. Resultados reais, falhas e revisão humana estão em STATUS.md.
+
+| Escolha | Justificativa |
+| --- | --- |
+| Starter Security gerenciado pelo Boot | Spring Security 5.7.11 sem versão própria no POM; nenhuma dependência adicional de teste. Mantidos JDK 17, Boot 2.7.18, Maven e PostgreSQL. |
+| AppUser / V003 | Entidade mínima com email canônico único, nome, hash BCrypt, ADMIN/CUSTOMER e active. Autenticação consulta o banco; não há API de contas ou cadastro. V001/V002 não foram editados. |
+| BCrypt custo 10 | Hashes da demonstração e dos testes gerados pelo encoder real 5.7.11. Senhas de demonstração claramente locais no README; SQL guarda somente hashes. Carga ON CONFLICT preserva alterações de contas existentes. |
+| HTTP Basic sem sessão de autenticação | STATELESS e request cache desativado; sem login de formulário/logout de sessão. Cada requisição protegida reavalia senha, perfil e situação no banco. Cookie CSRF não autentica. |
+| CSRF mantido com cookie HttpOnly | Basic também pode ser enviado automaticamente por navegadores. CookieCsrfTokenRepository padrão, XSRF-TOKEN/X-XSRF-TOKEN, sem desativar proteção. GET /api/csrf autenticado e no-store fornece o token para o cliente. |
+| Renovação de token antes de cada escrita | A cadeia padrão pode renovar o cookie durante autenticação Basic. O fluxo real preserva o cookie jar e consulta /api/csrf antes de escrever; foi acrescentado teste com CookieManager real, sem alterar estratégia de segurança para facilitar testes. |
+| Política de acesso explícita | GET de catálogo/saúde público; /api/me e /api/csrf autenticados; /api/admin/** ADMIN; demais acessos negados. /error permite o tratamento padrão de erros. /actuator/env agora é negado (401 anônimo/403 autenticado); não é exposto. |
+| Erros de segurança padronizados | 401 com challenge Basic para autenticação; 403 FORBIDDEN para autorização; 403 CSRF_INVALID antes da autenticação quando o token falha. Mensagens não distinguem conta inexistente, senha errada ou conta inativa. |
+| DTOs de escrita distintos | Criação recebe SKU/nome/preço/estoque/ativo; PUT só nome/preço/ativo; PATCH só estoque absoluto. Resposta administrativa acrescenta active aos dados do produto. Sem exclusão física. |
+| JSON estrito | Propriedades desconhecidas, frações em inteiros e coerções de tipos são rejeitadas. Desserializador de texto explícito evita conversão silenciosa de número/booleano em nome/SKU na versão gerenciada do Jackson. Validação de corpo/JSON retorna 400 sem detalhes internos. |
+| Dinheiro com escala 2 | Preços válidos completam zeros antes da escrita; DTO valida no máximo duas casas e rejeita entradas que precisariam arredondamento. Não altera valores monetários nem usa float/double. |
+| Escrita transacional com bloqueio de linha | PUT/PATCH leem produto com PESSIMISTIC_WRITE na transação, preservando campos de atualizações concorrentes administrativas. Compra concorrente e baixa transacional de pedidos pertencem à Fase 4. |
+| Conflito real de SKU | A restrição products_sku_unique é traduzida em 409 SKU_ALREADY_EXISTS. Outras falhas de integridade não são mascaradas como SKU duplicado. |
+| HTTP real nos testes | Java 17 HttpClient suporta PATCH e cookie jar sem bibliotecas extras. Usuários/BCrypt/PostgreSQL, cookies e cabeçalhos CSRF reais; sem WithMockUser, token fictício ou filtros desativados. |
+| Inicialização de teste compartilhada | PostgresTestDatabase cria um contêiner independente por classe e instala V001/V002/V003. Evita divergência de scripts sem singleton de banco/contexto entre classes. |
+
+Referência técnica consultada: [CookieCsrfTokenRepository 5.7.11](https://github.com/spring-projects/spring-security/blob/5.7.11/web/src/main/java/org/springframework/security/web/csrf/CookieCsrfTokenRepository.java). A política e o comportamento foram verificados também pela execução real.
+
+Pedidos, propriedade/isolamento de pedidos, cancelamento, resumo/filtros e disputa de estoque ainda não foram implementados. Avaliador externo e protocolo Ark continuam reservados às fases posteriores.

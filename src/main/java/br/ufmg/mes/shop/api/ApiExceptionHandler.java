@@ -7,7 +7,10 @@ import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
 
 import br.ufmg.mes.shop.product.ProductNotFoundException;
+import br.ufmg.mes.shop.product.SkuAlreadyExistsException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -41,5 +44,27 @@ public class ApiExceptionHandler {
     public ApiError invalidType(MethodArgumentTypeMismatchException exception) {
         return new ApiError("INVALID_REQUEST", "Parâmetros inválidos",
                 List.of(new ApiError.FieldError(exception.getName(), "deve ser um inteiro válido")));
+    }
+
+    @ExceptionHandler(SkuAlreadyExistsException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError skuConflict(SkuAlreadyExistsException exception) {
+        return new ApiError("SKU_ALREADY_EXISTS", exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError invalidBody(MethodArgumentNotValidException exception) {
+        List<ApiError.FieldError> fields = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> new ApiError.FieldError(error.getField(), error.getDefaultMessage()))
+                .sorted(Comparator.comparing(ApiError.FieldError::getField))
+                .collect(Collectors.toList());
+        return new ApiError("INVALID_REQUEST", "Corpo inválido", fields);
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError invalidJson() {
+        return new ApiError("INVALID_REQUEST", "JSON inválido", List.of());
     }
 }

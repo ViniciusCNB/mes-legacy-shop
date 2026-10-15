@@ -57,6 +57,16 @@ public class Product {
         this.active = active;
     }
 
+    public void updateDetails(String name, BigDecimal price, boolean active) {
+        this.name = name;
+        this.price = price;
+        this.active = active;
+    }
+
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
+    }
+
     public Long getId() {
         return id;
     }
