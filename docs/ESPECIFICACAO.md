@@ -112,3 +112,15 @@ Autorizado pelo autor após o commit 6778cd2 da Fase 3. São decisões de implem
 - Datas, status, IDs e paginação inválidos retornam 400 INVALID_REQUEST com fieldErrors quando aplicável. Credenciais, perfis e CSRF seguem a Fase 3; escritas exigem token/cookie reais.
 - V004 acrescenta purchase_orders e order_items, FKs sem exclusão em cascata, checks de valores/estado/quantidade e unicidade (order_id, product_id). SQL anterior imutável; Hibernate validate sem migração automática.
 - Aceitação: cálculos/estoques, rollback multitem, histórico de preço, isolamento, perfis/CSRF, cancelamento repetido e simultâneo, disputa HTTP pelo último item, filtros/resumo com limites de período/cancelados e banco novo.
+## Consolidação — Fase 5
+
+Autorizada pelo autor após 4979132. O contrato HTTP das Fases 1–4 é a referência; não será alterado para acomodar testes externos.
+
+- evaluation/ é Maven independente, sem parent Boot, Spring, JPA, JDBC ou classes da aplicação. Testes usam JUnit 5, HttpClient Java 17 e JSON com BigDecimal, com versões fixadas.
+- Preparação externa cria PostgreSQL 16 novo/isolado, instala V001–V004 e fixtures próprias, inicia o JAR e executa testes por HTTP. Sem endpoints especiais, mocks ou bypass de CSRF.
+- Cenários: saúde/catálogo/paginação; autenticação/perfis/CSRF; administração/validações/SKU; valores/estoque/rollback; isolamento; preço histórico; cancelamento repetido/concorrente; última unidade; filtros/resumo/período.
+- Concorrência externa sincroniza clientes e verifica respostas/estoque observáveis. A prova determinística de transações esperando locks continua nos testes internos; o avaliador externo não inspeciona mecanismos internos.
+- Scripts PowerShell/Bash criam projeto Compose exclusivo a cada execução; encerram apenas seu processo e removem apenas seus recursos descartáveis. Não reinicializam o volume local em 5432. Logs, relatórios e identidade do JAR ficam em target/evaluation-runs/.
+- Avaliador 1.0.0: registrar snapshot SHA256 dos insumos/especificação. Mudanças exigem revisão/registro, nunca relaxamento silencioso de assertions. Congelamento experimental definitivo depende da revisão do autor.
+- Contar linhas físicas totais/não vazias por produção Java, testes internos, testes externos, configuração/infraestrutura e documentação. Comentários contam nas linhas não vazias; não chamar essa medida de SLOC ou perseguir 3 mil linhas.
+- Código candidato da aplicação: 4979132, se inalterado na consolidação. Commit completo da Fase 5 só será identificado após o commit do autor. Não criar commit/tag ou iniciar Ark.

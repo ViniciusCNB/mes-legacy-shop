@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74
+    environment:
+      POSTGRES_DB: shop_evaluation
+      POSTGRES_USER: shop_evaluation
+      POSTGRES_PASSWORD: evaluation_local_only
+    ports:
+      - "127.0.0.1::5432"
+    volumes:
+      - database:/var/lib/postgresql/data
+      - ../src/main/resources/db/schema:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shop_evaluation -d shop_evaluation"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
+volumes:
+  database:

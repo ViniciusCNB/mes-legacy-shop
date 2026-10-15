@@ -94,3 +94,25 @@ Autorizada pelo autor após 6778cd2. Decisões de implementação, sem atribuiç
 Avaliador externo, métricas consolidadas e congelamento de baseline pertencem à Fase 5. Ark permanece posterior.
 
 Instantes são truncados a microssegundos antes da gravação, correspondendo à precisão do PostgreSQL e mantendo respostas iniciais/consultas/repetições exatamente iguais. O leitor JSON dos testes usa BigDecimal para verificar dinheiro sem perda no próprio cliente.
+
+## Fase 5 — Consolidação
+
+Autorizada pelo autor após 4979132. O código/SQL/testes internos da aplicação e POM/Compose local permanecem inalterados. São escolhas de implementação, não novos acordos atribuídos ao professor.
+
+| Escolha | Justificativa |
+| --- | --- |
+| Maven independente em evaluation/ | Sem parent Boot, módulo, Spring/JPA/JDBC ou imports da aplicação. JUnit 5.8.2, Jackson 2.13.5 e plugins com versões explícitas. As versões coincidem com componentes já verificados, mas o projeto não herda o grafo do Boot. |
+| HttpClient Java 17 / BigDecimal | HTTP real e JSON exato, sem acrescentar cliente HTTP externo ou usar double para dinheiro. |
+| Dados exclusivos | Fixture externa versionada, 1 ADMIN/2 clientes/1 inativo e 3 produtos conhecidos. BCrypt real, carga não repetível em banco vazio, sem truncar a base local nem reaproveitar fixtures internas. |
+| Projeto Compose aleatório por execução | Mesmo PostgreSQL/digest, volume novo e porta dinâmica de loopback. Recusa identidades existentes. Não reinicia ou apaga o ambiente local de 5432. |
+| Orquestração PowerShell/Bash | JAR fornecido pelo build raiz, perfil evaluation por variáveis, HTTP 18080 por padrão, espera de saúde com limite e limpeza só do processo/projeto criados. Uma execução por checkout; relatórios locais compartilhados. |
+| Sem endpoints especiais | Preparação por SQL/infraestrutura, comportamento somente por API com Basic/CSRF reais. IDs e instantes dos cenários vêm das respostas, sem alterações diretas do banco durante os testes. |
+| Concorrência externa observável | POSTs com tokens obtidos antes da barreira; três disputas independentes devem passar sem retry. Não tenta inferir mecanismo de lock via HTTP. Prova determinística e constraints permanecem nos testes internos. |
+| Relatórios/identidade fora do Git | Artefato SHA256, fonte/estado da pasta, versão/snapshot do avaliador e logs/resultados por execução em target/evaluation-runs. Arquivar antes de clean; excluir evaluation/target do Git. |
+| Snapshot candidato | evaluation/SNAPSHOT.sha256 registra especificação e insumos externos com LF. Revisão/congelamento definitivo depende do autor; mudanças futuras exigem versão/registro/revisão, sem ajustar assertions silenciosamente à migração. |
+| Contador Java sem dependências | JDK já é requisito; tools/SourceMetrics.java mede linhas físicas totais/não vazias por grupo. Comentários contam; não chamar de SLOC ou adicionar linhas para atingir meta. |
+| Identidade da baseline | Aplicação candidata em 4979132; commit final da consolidação será feito e identificado pelo autor. Não criar tag nem iniciar Ark. Conteúdo exato do pacote de migração depende de protocolo posterior; avaliador fica fora. |
+
+Compatibilidade verificada com JDK 17/Maven 3.9.11 e execuções reais; resultados completos em STATUS.md. A configuração useModulePath inicialmente gerava aviso de parâmetro desconhecido no Surefire 2.22.2 e foi removida. Nenhuma verificação foi desativada. O JAR vazio de um projeto apenas de testes não é artefato da loja.
+
+O Ubuntu/WSL disponível tem JDKs 11 e 21, sem JDK 17. Não foi instalado JDK no sistema nem executado build em outra linha para contornar a stack. Git Bash valida a receita POSIX usando o JDK Windows; não comprova execução nativa Linux.

@@ -1,6 +1,6 @@
 # mes-legacy-shop
 
-Objeto de estudo do TP de MES. As Fases 1 a 4 fornecem a fundação local, catálogo, segurança/administração e pedidos com estoque transacional. Ark e as migrações serão etapas posteriores. A construção inicial teve auxílio do Codex e requer revisão do autor.
+Objeto de estudo do TP de MES. As Fases 1 a 4 fornecem a fundação local, catálogo, segurança/administração e pedidos com estoque transacional. A Fase 5 acrescenta avaliação HTTP independente, reprodução isolada e métricas. Ark e as migrações serão etapas posteriores. A construção inicial teve auxílio do Codex e requer revisão do autor.
 
 ## Versões e pré-requisitos
 
@@ -343,6 +343,29 @@ O sed acima extrai o campo id da resposta compacta desta aplicação; não é um
 GET /api/admin/orders aceita customerId, status (CREATED/CANCELLED), start/end e page/size. GET /api/admin/reports/orders aceita customerId/start/end, exclui cancelados e retorna orderCount/total. Datas são instantes UTC ISO-8601 com Z, por exemplo start=2026-10-15T00:00:00Z&end=2026-10-16T00:00:00Z, filtradas sobre createdAt: início inclusivo/fim exclusivo. Sem datas considera todo o histórico; intervalo vazio/invertido é inválido. Listas ordenam id decrescente, page padrão 0 e size 20 (até 100), envelope como catálogo.
 
 Falhas de item desfazem a compra inteira: produto ausente 404 PRODUCT_NOT_FOUND, inativo 409 PRODUCT_INACTIVE, estoque insuficiente 409 INSUFFICIENT_STOCK; produto repetido/entrada inválida 400 INVALID_REQUEST. Pedido ausente/de outro cliente retorna 404 ORDER_NOT_FOUND. Reposição acima do limite inteiro retorna 409 STOCK_LIMIT_EXCEEDED e desfaz todo o cancelamento. Contrato completo em docs/ESPECIFICACAO.md.
+## Consolidação e avaliação independente — Fase 5
+
+O [avaliador](evaluation/README.md) usa JUnit 5 e HTTP Java 17 em projeto Maven separado, sem classes ou dependências do Spring. Após o build/verificação da aplicação, execute na raiz:
+
+~~~powershell
+.\evaluation\run.ps1
+~~~
+
+Bash/Linux, com JAVA_HOME apontando para JDK 17:
+
+~~~sh
+bash evaluation/run.sh
+~~~
+
+Cada execução cria PostgreSQL novo em projeto Compose exclusivo/porta dinâmica, aplica esquema e fixtures próprios, inicia o JAR na porta HTTP 18080, roda o avaliador e limpa somente seus recursos. Não altera o volume local em 5432. Falhas são preservadas; execute um roteiro por checkout de cada vez. Mais opções, pré-requisitos e limites em evaluation/README.md.
+
+Evidências locais ficam em target/evaluation-runs/<projeto>; resultados internos e JaCoCo continuam em target. Arquive-as antes de novo clean. Para contar linhas físicas por produção, testes internos/externos, infraestrutura e documentação:
+
+~~~sh
+java tools/SourceMetrics.java
+~~~
+
+O [candidato a baseline](docs/BASELINE.md) identifica a fonte da aplicação, o snapshot do contrato/avaliador e o roteiro de revisão. O autor ainda precisa revisar e registrar o commit completo antes de considerar a tag baseline-boot-2.7. A construção e os testes não iniciam migração ou experimento Ark.
 ## Documentação e próxima fase
 
-[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor. O próximo passo, mediante nova solicitação, é a Fase 5: consolidação, evaluation/ independente e preparação da baseline. Nenhum avaliador externo ou experimento Ark foi iniciado.
+[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor. A Fase 5 está documentada em evaluation/README.md e docs/BASELINE.md. O próximo passo é a revisão/commit do autor e a definição posterior do protocolo experimental. Nenhuma tag ou execução Ark foi iniciada.

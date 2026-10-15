@@ -10,7 +10,7 @@
 
 O estado efetivamente observado fica em STATUS.md. A conclusão de uma fase não autoriza iniciar a seguinte.
 
-## Aceitação futura da aplicação completa
+## Aceitação e revisão da aplicação completa
 
 Stack inicial preservada; ambiente reconstruível; comportamentos da ESPECIFICACAO passando em banco novo; contratos/dados/versões conhecidos; revisão do autor; commit candidato identificado. Somente depois da revisão considerar a tag baseline-boot-2.7. Nenhum commit ou tag é feito nesta tarefa.
 
@@ -23,5 +23,6 @@ Após validar a aplicação, fixar versões concretas de Boot 3.5.x e 4.0.x, Ark
 - Fase 1 concluída e commitada pelo autor em 502c36c.
 - Fase 2 concluída e commitada pelo autor em f452ab5; PostgreSQL local permanece em 5432.
 - Fase 3 concluída e commitada pelo autor em 6778cd2.
-- Fase 4 autorizada nesta continuação: pedidos, atomicidade, isolamento, cancelamento, concorrência e resumo/filtros. Entregas e resultados reais em STATUS.md. Próximo passo, mediante nova solicitação: Fase 5, Consolidação, incluindo evaluation/ independente.
-- Nenhum experimento Ark ou migração de framework é autorizado pelas quatro primeiras fases.
+- Fase 4 concluída e commitada pelo autor em 4979132.
+- Fase 5: consolidação técnica implementada, avaliador independente e reprodução com banco novo. Resultados reais em STATUS.md; revisão e commit completos permanecem com o autor. Próximo passo: revisão da baseline e definição posterior do protocolo, sem iniciar Ark.
+- Nenhum experimento Ark ou migração de framework é autorizado pelas cinco fases de construção.
