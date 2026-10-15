@@ -17,7 +17,7 @@ public final class PostgresTestDatabase {
                 .withDatabaseName(databaseName)
                 .withUsername("shop_test")
                 .withPassword("shop_test");
-        for (String script : List.of("V001__foundation.sql", "V002__products.sql", "V003__users.sql")) {
+        for (String script : List.of("V001__foundation.sql", "V002__products.sql", "V003__users.sql", "V004__orders.sql")) {
             database.withCopyFileToContainer(MountableFile.forClasspathResource("db/schema/" + script),
                     "/docker-entrypoint-initdb.d/" + script);
         }

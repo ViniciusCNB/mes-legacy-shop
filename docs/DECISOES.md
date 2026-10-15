@@ -28,7 +28,7 @@ Data: 15/10/2026. Decisões rotineiras executadas pelo Codex dentro da autoriza�
 
 ## Reservado às próximas fases
 
-Estratégia de concorrência, DTOs/paginação de pedidos, semântica completa dos filtros serão decididos nas próximas fases. A configuração Security/CSRF/sessão foi definida na Fase 3. DTOs, paginação e dados locais de produtos foram definidos na Fase 2. As regras da referência permanecem no contrato proposto, sem aprovação presumida de alterações. Não há decisão experimental final, execução Ark ou baseline/tag. O Codex não faz commits; o autor registrou a Fase 1 em 502c36c.
+Estratégia de concorrência, DTOs/paginação de pedidos e filtros foram definidos na Fase 4, registrada abaixo. A configuração Security/CSRF/sessão foi definida na Fase 3. DTOs, paginação e dados locais de produtos foram definidos na Fase 2. As regras da referência permanecem no contrato proposto, sem aprovação presumida de alterações. Não há decisão experimental final, execução Ark ou baseline/tag. O Codex não faz commits; o autor registrou a Fase 1 em 502c36c.
 
 ## Fase 2 — Catálogo
 
@@ -73,4 +73,24 @@ Autorizada pelo autor após f452ab5. São decisões de implementação dentro de
 
 Referência técnica consultada: [CookieCsrfTokenRepository 5.7.11](https://github.com/spring-projects/spring-security/blob/5.7.11/web/src/main/java/org/springframework/security/web/csrf/CookieCsrfTokenRepository.java). A política e o comportamento foram verificados também pela execução real.
 
-Pedidos, propriedade/isolamento de pedidos, cancelamento, resumo/filtros e disputa de estoque ainda não foram implementados. Avaliador externo e protocolo Ark continuam reservados às fases posteriores.
+O marco acima registra a Fase 3; pedidos foram autorizados e implementados na Fase 4, abaixo. Avaliador externo e protocolo Ark continuam reservados às fases posteriores.
+
+## Fase 4 — Pedidos
+
+Autorizada pelo autor após 6778cd2. Decisões de implementação, sem atribuição ao professor. POM, stack e versões preservados, sem novas dependências.
+
+| Escolha | Justificativa |
+| --- | --- |
+| SQL V004 / PurchaseOrder / OrderItem | V001–V003 imutáveis; sem recriar base ou SQL automático na aplicação. FKs preservam histórico; checks de quantidade/estado/valores e produto único por pedido. |
+| DTOs próprios | Entrada só produto/quantidade; proprietário vem de Basic. Resposta sem relações JPA/dados pessoais; itens por productId crescente. |
+| Até 100 itens distintos | Limita trabalho por transação. Integer positivo para quantidade/estoque; numeric(19,2) para preço unitário e numeric(38,2) para resultados exatos de multiplicação/soma. |
+| PESSIMISTIC_WRITE no PostgreSQL | Produtos por ID crescente na mesma transação da compra, compatível com administração. Funciona entre processos, sem lock apenas na JVM. |
+| Cancelamento bloqueia primeiro o pedido | Segunda chamada aguarda e observa CANCELLED, sem nova reposição. Produtos bloqueados na ordem da compra. Reposição acima de Integer.MAX_VALUE causa 409 e rollback de todos os efeitos. |
+| Propriedade e perfis | Outro cliente recebe o mesmo 404 do ausente; ADMIN consulta/cancela quaisquer, mas não compra. Basic/BCrypt/CSRF preservados. |
+| Filtros por createdAt | customerId/status/start/end combinados por AND, UTC, início inclusivo/fim exclusivo. Datas opcionais, intervalo vazio/invertido inválido. |
+| Paginação e resumo | Envelope/limites como catálogo; pedidos por id decrescente. Agregação SQL conta/soma apenas CREATED com preços contratados, sem carregar histórico inteiro. Vazio retorna 0/0.00. |
+| HTTP e PostgreSQL reais nos testes | Duas threads sincronizadas por barreira disputam última unidade/cancelam pedido; um bloqueio independente só é liberado quando pg_stat_activity comprova as duas transações esperando no PostgreSQL. Assertions verificam respostas e estado persistido. Fixtures/probe de esquema incluem FKs/tabelas novas, sem reduzir verificações anteriores. |
+
+Avaliador externo, métricas consolidadas e congelamento de baseline pertencem à Fase 5. Ark permanece posterior.
+
+Instantes são truncados a microssegundos antes da gravação, correspondendo à precisão do PostgreSQL e mantendo respostas iniciais/consultas/repetições exatamente iguais. O leitor JSON dos testes usa BigDecimal para verificar dinheiro sem perda no próprio cliente.

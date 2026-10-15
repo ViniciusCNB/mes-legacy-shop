@@ -35,6 +35,10 @@ public class SecurityConfiguration {
                         .antMatchers(HttpMethod.GET, "/actuator/health", "/api/products", "/api/products/*")
                         .permitAll()
                         .antMatchers(HttpMethod.GET, "/api/me", "/api/csrf").authenticated()
+                        .antMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
+                        .antMatchers(HttpMethod.GET, "/api/orders").hasRole("CUSTOMER")
+                        .antMatchers(HttpMethod.GET, "/api/orders/*").hasAnyRole("CUSTOMER", "ADMIN")
+                        .antMatchers(HttpMethod.POST, "/api/orders/*/cancel").hasAnyRole("CUSTOMER", "ADMIN")
                         .antMatchers("/api/admin/**").hasRole("ADMIN")
                         .antMatchers("/error").permitAll()
                         .anyRequest().denyAll());

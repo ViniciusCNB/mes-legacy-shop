@@ -1,138 +1,115 @@
 # Status
 
-Atualização: 15/10/2026, America/Sao_Paulo. **Fase 3 — Segurança e administração implementada e verificada.** A Fase 2 foi commitada pelo autor em `f452ab5`. Nenhum commit, staging ou tag foi feito pelo Codex nesta continuação. A Fase 4 não foi iniciada.
+Atualização: 15/10/2026, America/Sao_Paulo. **Fase 4 — Pedidos implementada e verificada.** A Fase 3 foi commitada pelo autor em 6778cd2; a pasta estava limpa ao iniciar. Nenhum commit, staging ou tag foi feito pelo Codex. A Fase 5 não foi iniciada.
 
 ## Entregue
 
-- Mantidos Boot 2.7.18, Java 17, Maven Wrapper 3.9.11, PostgreSQL 16.10/digest e porta local 5432. Adicionado somente spring-boot-starter-security, com Spring Security 5.7.11 gerenciado pelo Boot; sem novas bibliotecas de teste.
-- AppUser com id, nome, email canônico único, hash BCrypt, ADMIN/CUSTOMER e situação ativa. V003__users.sql acrescenta app_users; V001/V002 de esquema foram preservados.
-- HTTP Basic consulta usuários no banco em cada requisição; BCrypt custo 10. Sem sessão de autenticação, formulário de login, JWT ou cadastro público.
-- GET /api/me em DTO com somente id/name/email/role. Usuário inativo, inexistente ou senha inválida retorna 401 genérico com challenge Basic.
-- GET /api/csrf autenticado/no-store, cookie HttpOnly e cabeçalho reais. CSRF permanece habilitado nas escritas; cookie CSRF não autentica. Fluxo de renovação com cookie jar documentado e testado.
-- POST /api/admin/products, PUT /api/admin/products/{id} e PATCH /api/admin/products/{id}/stock restritos a ADMIN. Criação 201, atualização 200, estoque absoluto, inativação sem excluir linha e 409 para SKU duplicado.
-- DTOs de escrita com validação; JSON estrito para nomes, valores, campos desconhecidos e tipos. Preços válidos completam duas casas decimais sem arredondar entradas inválidas. PUT/PATCH são transacionais e usam bloqueio de linha.
-- Erros 400/401/403/404/409 padronizados sem expor hashes, credenciais, classes ou stack traces. Acesso não previsto é negado por padrão; saúde/catálogo continuam públicos. /actuator/env passou de 404 para 401 anônimo/403 autenticado pela nova política explícita.
-- Carga explícita de demonstração com um administrador e dois clientes ativos, hashes BCrypt e credenciais locais no README. Repetição por email preserva contas existentes; fixtures de teste independentes.
-- Documentação, decisões, plano e instruções atualizados. Sem pedidos, frontend, serviços externos ou migração Ark.
-
-## Ambiente e versões verificadas
-
-Windows 11 amd64; Microsoft OpenJDK 17.0.15 selecionado em JAVA_HOME; Maven 3.9.11; Docker Engine 27.5.1/API 1.47, daemon Linux amd64; Compose 2.32.4. Imagem PostgreSQL preservada: postgres:16.10-bookworm, digest sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74.
-
-`dependency:tree` confirmou spring-security-config/core/crypto/web **5.7.11**. O grafo filtrado está em target/security-dependency-tree.txt, não versionado. JUnit, Testcontainers, Hibernate, driver JDBC e JaCoCo mantêm as versões anteriores. Os testes HTTP novos usam o cliente nativo Java 17, incluindo PATCH, sem spring-security-test/WithMockUser ou mocks de autenticação.
+- Stack preservada: Spring Boot 2.7.18, Java 17, Maven Wrapper 3.9.11, PostgreSQL 16.10 no mesmo digest, porta local 5432. Nenhuma dependência ou versão nova; POM inalterado.
+- SQL transacional V004 cria purchase_orders/order_items, identidades, FKs, índices, produto único por pedido e checks de quantidade/valores/estado. V001–V003 preservados; Hibernate continua validate.
+- POST /api/orders cria pedido do CUSTOMER autenticado, sem aceitar proprietário/preço/total do cliente. Entrada estrita, 1–100 produtos distintos, quantidade inteira positiva. Servidor calcula unitPrice/subtotal/total exatos e baixa estoque na mesma transação.
+- Locks PESSIMISTIC_WRITE de produtos por ID crescente, compatíveis com a administração. Produto inexistente/inativo/sem estoque ou qualquer item inválido impede todos os efeitos; rollback multitem verificado.
+- Preço contratado preservado mesmo após reajuste/inativação. BigDecimal, escala 2, preço numeric(19,2), totais numeric(38,2); quantidade/preço máximos testados sem arredondamento ou overflow monetário.
+- GET /api/orders lista somente pedidos próprios, paginados. GET /api/orders/{id} permite proprietário ou ADMIN. Outro cliente recebe o mesmo 404 do ausente; respostas DTO sem dados pessoais, senha ou relações JPA.
+- POST /api/orders/{id}/cancel permite proprietário ou ADMIN; bloqueia o pedido e depois produtos na mesma ordem. Cancelamento repetido/simultâneo restitui uma vez e preserva cancelledAt. Guarda de overflow de estoque causa 409/rollback integral, permitindo correção administrativa e nova tentativa.
+- GET /api/admin/orders filtra customerId/status/start/end; GET /api/admin/reports/orders conta/soma somente não cancelados. Período em createdAt, início inclusivo/fim exclusivo, filtros combinados e agregação no banco. Paginação por id decrescente; datas UTC com precisão de microssegundos.
+- HTTP Basic/BCrypt, perfis, CSRF e política sem sessão preservados. ADMIN não compra/lista como cliente. Testes usam usuários/token/cookie reais, sem mocks ou bypass.
+- Documentação, contrato, decisões e receitas PowerShell/POSIX atualizados. Sem frontend, avaliador externo, baseline/tag ou experimento Ark.
 
 ## Comandos e resultados reais
 
-Os comandos Maven usaram JDK 17. As receitas completas de preparação, execução e uso Windows/POSIX estão no README.
+JDK: Microsoft OpenJDK 17.0.15 em C:\Users\vinic\.jdks\ms-17.0.15; Maven 3.9.11. Windows 11 amd64, Docker Engine 27.5.1/API 1.47, Compose 2.32.4. PostgreSQL 16.10 em contêiner Linux, imagem postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74.
 
-| Comando/verificação | Resultado observado |
+| Comando/verificação | Resultado |
 | --- | --- |
-| Inspeção integral de AGENTS/README/docs/código e Git | Árvore inicialmente limpa; Fase 2 no commit f452ab5; nenhuma base recriada |
-| docker version; docker compose ps | Daemon acessível com acesso ampliado; banco deste projeto saudável em 127.0.0.1:5432 |
-| .\mvnw.cmd -B -ntp compile / test-compile | BUILD SUCCESS com o starter de segurança e implementação/estrutura de teste |
-| Primeiro clean verify | 71 execuções, 1 falha e 1 erro, 0 ignorados. Falha real de coerção JSON e erro de conexão inicial registrados abaixo |
-| clean verify após correção e teste de cookie jar | BUILD SUCCESS, 72 execuções sem falhas/erros/ignorados |
-| clean verify com casos monetários adicionais | BUILD SUCCESS, 74 execuções; foram depois tornados literais/exatos os valores esperados desses testes |
-| **.\mvnw.cmd -B -ntp clean verify final** | **BUILD SUCCESS, 74 execuções, 0 falhas, 0 erros, 0 ignorados**. FoundationIT: 1; CatalogIT: 32; SecurityAdminIT: 41 (incluindo parametrizações). Finalizado 18:51:46 -03:00, duração 1min09s |
-| .\mvnw.cmd -B -ntp dependency:tree '-Dincludes=org.springframework.security:*' '-DoutputFile=target/security-dependency-tree.txt' | BUILD SUCCESS; todos os módulos de segurança resolvidos em 5.7.11 |
-| SELECT to_regclass('shop.app_users') no volume local | Tabela ausente, permitindo aplicar somente V003 sem reexecutar scripts anteriores |
-| Get-Content src/main/resources/db/schema/V003__users.sql -Raw via pipe para psql do Compose | CREATE TABLE, saída zero, volume existente preservado |
-| Carga db/demo/V002__users.sql via psql, duas vezes | INSERT 0 3 e INSERT 0 0; três usuários ativos, perfis corretos, hashes com 60 caracteres |
-| java -jar target/mes-legacy-shop-0.0.1-SNAPSHOT.jar com JDK 17 | Iniciou com validação de esquema e PostgreSQL em 5432; HTTP em 127.0.0.1:8080 |
-| curl.exe --fail --user para /api/me; consultas das três contas locais | HTTP 200 com id/name/email/role de cada conta; sem senha/hash |
-| Exemplo PowerShell completo do README com WebSession | POST criou ADMIN-DEMO-001 (ID 9); PUT alterou nome/preço/ativo; PATCH definiu estoque 7. Produto permaneceu inativo e preservado |
-| Exemplo curl/awk do README executado no Git Bash | Saída zero; cookie HttpOnly/token aceitos; POST criou ADMIN-DEMO-LINUX-001 (ID 10). Depois foi inativado pela API |
-| GET /api/me sem Basic | 401 AUTHENTICATION_REQUIRED |
-| POST administrativo com Basic e sem token CSRF | 403 CSRF_INVALID |
-| Cliente local com Basic e CSRF válidos em POST administrativo | 403 FORBIDDEN, sem criação de produto |
-| Repetição do SKU ADMIN-DEMO-001 com ADMIN e CSRF válidos | 409 SKU_ALREADY_EXISTS; produto existente preservado |
-| Produto criado e depois inativado consultado publicamente | 404 PRODUCT_NOT_FOUND |
-| curl.exe --fail para saúde e catálogo sem autenticação | 200/UP; catálogo público com os três ativos originais e totais corretos |
-| git diff --check; git diff --cached --name-only; git log -1 | Sem erro de whitespace, index vazio, HEAD permanece f452ab5 |
+| git status --short / git log -3 --oneline na inspeção inicial | Pasta limpa, HEAD 6778cd2; fases anteriores commitadas pelo autor. |
+| docker compose config --quiet / docker compose ps | Configuração válida; serviço saudável em 127.0.0.1:5432. |
+| SELECT to_regclass('shop.purchase_orders') | Tabela ausente antes de aplicar V004. |
+| Get-Content src/main/resources/db/schema/V004__orders.sql -Raw \| docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' | BEGIN, duas tabelas/três índices, COMMIT; 6 produtos/3 usuários preservados, 0 pedidos inicialmente. |
+| .\mvnw.cmd -B -ntp clean verify — primeira tentativa | BUILD FAILURE, 123 testes, 5 falhas, 0 erros/skips; diagnóstico e correções abaixo. |
+| .\mvnw.cmd -B -ntp clean verify — após correções | **BUILD SUCCESS**, 123 testes, 0 falhas, 0 erros, 0 skips. Total 1:49, encerrado em 15/10/2026 19:23:50 -03. |
+| java -jar target/mes-legacy-shop-0.0.1-SNAPSHOT.jar com o JDK 17 indicado | Inicialização local em 127.0.0.1:8080, conexão real e validate; GET /actuator/health 200 {"status":"UP"}. |
+| Fluxo HTTP PowerShell com Basic/CSRF/cookie reais | Pedido 1: POST 201, 2 unidades de MUG-001 a 39.90, total 79.80; estoque 10→8. Releitura mantém instante; cliente 2 recebe 404. Resumo antes: 1/79.80; após cancelamento: 0/0.00. |
+| Cancelamento repetido PowerShell | Ambas as chamadas 200, CANCELLED e mesmo cancelledAt; estoque 8→10, sem reposição adicional. |
+| Receita POSIX do README executada por Git Bash | Pedido 2: 1 unidade/39.90, consulta e cancelamento com curl/awk/sed e cookie jar; estoque restituído. Sem dependência de jq ou bypass de CSRF. |
+| Listas/filtros/resumo locais por HTTP | Cliente lista 2 pedidos; ADMIN filtra 2 CANCELLED no período e 0 CREATED. Resumo do período 0/0.00, excluindo cancelados. |
+| Conferência SQL final | Pedidos 1 e 2 CANCELLED (79.80/39.90), produtos/usuários preservados. MUG-001 estoque 10; NOTEBOOK-001 estoque 20. |
+| Encerramento do JAR | Somente PID 94596, iniciado nesta tarefa e conferido pelo comando do processo, encerrado; banco Compose mantido saudável. |
+| git diff --check | Sem problemas de whitespace. |
 
-O psql recebeu os SQLs por pipe em `docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`. Os scripts antigos não foram reaplicados nem editados; não houve reset de volume.
+As receitas completas estão no README. O Maven foi executado com JAVA_HOME definido para o JDK acima. Logs completos locais desta fase, fora do versionamento:
+- C:\Users\vinic\AppData\Local\Temp\mes-orders-verify.log (primeira tentativa);
+- C:\Users\vinic\AppData\Local\Temp\mes-orders-accepted-verify.log (build aprovado);
+- C:\Users\vinic\AppData\Local\Temp\mes-orders-local-app.log (JAR local).
 
-## Comportamentos comprovados pela suíte
+## Testes e cobertura
 
-- Regressão de saúde/conexão/catálogo/paginação/DTOs e validação do esquema, preservando as assertions de negócio da Fase 2. A atualização de status do Actuator não exposto foi definida no contrato antes da implementação da segurança.
-- Administrador e dois clientes distintos autenticados a partir de PostgreSQL real; hashes BCrypt válidos; conta inativa/ausente/senha errada rejeitadas com mensagem genérica e challenge Basic.
-- /api/me sem senha/hash ou entidade JPA. Cookies CSRF não dão acesso sem Basic; nenhum JSESSIONID foi criado. Alterar perfil/active no banco afeta a requisição seguinte.
-- Cada uma das três operações administrativas bloqueia cliente (403), anônimo/senha errada com CSRF válido (401), e administrador sem CSRF ou com token divergente (403). Nessas falhas, os dados permanecem iguais à fixture.
-- Fluxo administrativo completo: criação, mudança de detalhes, ocultação de inativo sem exclusão, estoque absoluto/repetição sem incremento, estoque zero e reativação no catálogo.
-- Conflito de SKU pelo banco traduzido em 409; produto ausente em PUT/PATCH retorna 404; corpos/IDs inválidos e JSON/coerções/campos indevidos retornam 400 sem efeitos parciais.
-- Preços 0.1 e 12 representados e persistidos como 0.10 e 12.00. Mais de duas casas continuam inválidas; não há arredondamento silencioso.
-- Renovação de token antes de cada escrita com CookieManager real e autenticação em cada chamada. Cookie HttpOnly, Path=/, no-store e ausência de sessão de autenticação verificados.
+| Suíte | Execuções | Resultado final |
+| --- | ---: | --- |
+| FoundationIT | 1 | Passou: saúde, conexão/esquema PostgreSQL e ausência de exposição administrativa. |
+| CatalogIT | 32 | Passou: catálogo/paginação, validações, dinheiro, constraints e rejeição de coluna ausente. |
+| SecurityAdminIT | 41 | Passou: usuários/BCrypt/Basic, perfis, CSRF real, administração e estoque. |
+| OrdersIT | 49 | Passou: valores/estoques, rollback, histórico, isolamento, perfis/CSRF, cancelamento/overflow, filtros/resumo, limites, constraints e concorrência. |
+| Total | **123** | **0 falhas, 0 erros, 0 skips**. |
 
-JaCoCo final: **240/244 linhas (98,36%)**, **947/960 instruções (98,65%)**, **10/12 branches (83,33%)**. Sem meta arbitrária ou testes de getters para inflar cobertura. A métrica não substitui assertions de autorização, CSRF ou regras futuras de pedidos. Relatórios em target/site/jacoco e target/failsafe-reports, não versionados.
+Cada classe cria banco PostgreSQL novo com V001–V004, sem Compose local, H2 ou mocks. Fixtures limpam explicitamente tabelas relacionadas apenas nos contêineres descartáveis; probe de esquema inclui as novas tabelas, mantendo a asserção específica de coluna ausente.
 
-## Falhas encontradas e resolução
+As duas chamadas HTTP de cada teste concorrente são iniciadas por barreira. Uma conexão independente mantém a linha bloqueada; o teste exige que pg_stat_activity comprove duas transações aguardando locks antes de liberá-la. Última unidade: exatamente um 201 e um 409 INSUFFICIENT_STOCK, um pedido/item persistido e estoque zero. Cancelamentos simultâneos por proprietário/ADMIN: dois 200 com a mesma resposta e estoque restituído uma vez. Não há retry, serialização artificial das chamadas ou relaxamento das assertions.
 
-1. Primeiro build completo: FoundationIT recebeu `java.net.SocketException: Connection reset` ao abrir conexão JDBC após o início do contêiner. Hibernate em seguida não obteve metadados para resolver dialect. Não foi fixado dialect para esconder a falha, nem alterado timeout/retry/skip. A causa além do reset de conexão não foi determinada; a falha não se repetiu nas três execuções completas posteriores, todas aprovadas.
-2. O primeiro teste HTTP detectou nome numérico aceito como texto (esperava 400, recebeu 201). A configuração de coerção de texto não impedia essa conversão na versão gerenciada do Jackson. Foi substituída por desserialização estrita de String; a assertion foi mantida e passou. Nenhuma versão foi atualizada para contornar o problema.
-3. A observação com cookie jar mostrou renovação do token/cookie na cadeia padrão após autenticação. O fluxo documentado foi verificado renovando o token antes de cada escrita, sem desativar CSRF ou alterar filtros para facilitar testes.
-4. Logs ERROR de chave duplicada e de coluna ausente são esperados nos testes negativos, assertados como 409 e recusa de inicialização, respectivamente. Não são erros ocultados do resultado final.
+JaCoCo observado, sem meta arbitrária: **435/439 linhas (99,09%)**, **1936/1954 instruções (99,08%)**, **48/50 ramos (96,00%)**. Relatórios em target/site/jacoco/index.html e jacoco.csv; resultados detalhados em target/failsafe-reports. São relatórios locais, não arquivos para commit.
 
-Logs em C:\Users\vinic\AppData\Local\Temp, não versionados: mes-security-dependencies.log, mes-security-compile.log, mes-security-first-verify.log (falhas), mes-security-second-verify.log (72 aprovados), mes-security-final-verify.log e mes-security-accepted-verify.log (74 aprovados), mes-security-jar.log (diagnóstico) e mes-security-accepted-jar.log (JAR final). O histórico das fases anteriores permanece nos commits do autor.
+## Falhas encontradas e correções
 
-## Estado local ao terminar
+A primeira execução teve cinco falhas reais, preservadas no log:
+- Quatro comparações exatas de resposta detectaram nanosegundos no Instant recém-criado/cancelado e arredondamento a microssegundos na releitura do PostgreSQL. A aplicação agora trunca os instantes a microssegundos antes de persistir; as mesmas assertions de igualdade passaram, inclusive no cancelamento simultâneo.
+- Uma comparação de dinheiro no limite revelou perda de precisão no leitor JsonNode padrão do teste, que interpretava o número como double. O leitor de resposta do teste passou a USE_BIG_DECIMAL_FOR_FLOATS, preservando o valor completo recebido; assertivas exatas de HTTP e banco passaram. Produção calcula/serializa BigDecimal.
+- O Failsafe 2.22.2 gerenciado pelo parent registrou diagnóstico não fatal de inspeção do processo pai no Windows (PpidChecker/NOOP). A JVM continuou, as quatro suítes foram executadas e os resultados acima foram produzidos. Nenhum teste/filtro foi desativado.
 
-- Aplicação JAR de verificação encerrada; banco Compose permanece saudável em 5432.
-- Esquema V001/V002/V003 aplicado ao volume preservado. Há seis produtos: quatro da carga da Fase 2 e dois criados pelos exemplos desta fase. Três permanecem ativos no catálogo; os produtos ADMIN-DEMO-001 e ADMIN-DEMO-LINUX-001 estão inativos, sem exclusão física.
-- Três usuários locais ativos da carga V002 de demonstração. Credenciais e comandos em README.md; repetir a carga não sobrescreve contas.
-- Contêineres dos testes são descartáveis e foram removidos pelo Testcontainers/Ryuk. .env, target, logs e arquivos temporários não são versionados.
+Falhas de constraints e de validação de esquema provocadas pelos testes negativos aparecem nos logs intencionalmente. As falhas históricas de ambiente da Fase 3 permanecem no histórico do STATUS do commit 6778cd2; não se repetiram como falha nesta verificação.
 
-## Limitações e próximo passo
+## Estado local, limites e próximo passo
 
-- Build/aplicação em Linux nativo continuam não verificados. O exemplo POSIX HTTP foi executado no Git Bash do Windows; isso não comprova execução nativa do Java/Boot em Linux.
-- O reset de conexão isolado deve ser considerado se reaparecer em outra execução; os resultados posteriores não apagam a falha registrada.
-- Pedidos, concorrência de compras, cancelamento, filtros/resumo e avaliação externa não foram implementados. Revisão humana das mudanças e do contrato desta fase permanece pendente; não há baseline experimental completa ou execução Ark.
-
-**Próximo passo: Fase 4 — Pedidos**, somente mediante nova solicitação. Implementar propriedade pelo cliente autenticado, valores e preço contratado, baixa transacional de estoque, atomicidade, isolamento entre clientes, cancelamento com reposição única, consultas/filtros/resumo e disputa pelo último item, com PostgreSQL real. Não iniciar o avaliador externo antes da Fase 5.
+- JAR de verificação encerrado; PostgreSQL mantido em 5432 com volume preservado. Dois pedidos de demonstração CANCELLED permanecem como histórico; não foram apagados nem alterados diretamente para mascarar resultados. Nenhum estoque ficou consumido pelos roteiros.
+- Build e aplicação em Linux nativo continuam não verificados. A receita POSIX passou em Git Bash no Windows; isso não comprova execução nativa do JDK/Boot em Linux. Os próprios bancos Testcontainers são PostgreSQL Linux reais.
+- Revisão humana do código/contrato e commit permanecem com o autor. Não há baseline experimental completa ou execução Ark.
+- **Próximo passo, somente mediante nova solicitação: Fase 5 — Consolidação.** Criar evaluation/ independente com JUnit 5/HTTP Java 17, consolidar roteiro, contratos/dados e métricas, reproduzir banco novo e preparar candidato a baseline para revisão. Essa fase não foi iniciada.
 
 ## Commit sugerido para o autor
 
-Um commit atômico: **feat: adiciona segurança e administração de produtos**.
+Um commit atômico: **feat: implementa pedidos com estoque transacional e cancelamento**.
 
-Arquivos desta alteração (37):
+Arquivos desta alteração (30):
 
-```text
+~~~text
 AGENTS.md
-README.md
 docs/CONTEXTO_TP.md
 docs/DECISOES.md
 docs/ESPECIFICACAO.md
 docs/PLANO.md
 docs/STATUS.md
-pom.xml
+README.md
 src/main/java/br/ufmg/mes/shop/api/ApiExceptionHandler.java
-src/main/java/br/ufmg/mes/shop/api/JsonConfiguration.java
-src/main/java/br/ufmg/mes/shop/product/Product.java
-src/main/java/br/ufmg/mes/shop/product/ProductRepository.java
-src/main/java/br/ufmg/mes/shop/product/AdminProductResponse.java
-src/main/java/br/ufmg/mes/shop/product/CreateProductRequest.java
-src/main/java/br/ufmg/mes/shop/product/UpdateProductRequest.java
-src/main/java/br/ufmg/mes/shop/product/StockUpdateRequest.java
-src/main/java/br/ufmg/mes/shop/product/ProductAdminController.java
-src/main/java/br/ufmg/mes/shop/product/ProductAdminService.java
-src/main/java/br/ufmg/mes/shop/product/SkuAlreadyExistsException.java
-src/main/java/br/ufmg/mes/shop/security/ApiSecurityHandlers.java
-src/main/java/br/ufmg/mes/shop/security/CsrfController.java
+src/main/java/br/ufmg/mes/shop/order/CreateOrderRequest.java
+src/main/java/br/ufmg/mes/shop/order/InvalidOrderRequestException.java
+src/main/java/br/ufmg/mes/shop/order/OrderAdminController.java
+src/main/java/br/ufmg/mes/shop/order/OrderConflictException.java
+src/main/java/br/ufmg/mes/shop/order/OrderController.java
+src/main/java/br/ufmg/mes/shop/order/OrderFilter.java
+src/main/java/br/ufmg/mes/shop/order/OrderItem.java
+src/main/java/br/ufmg/mes/shop/order/OrderNotFoundException.java
+src/main/java/br/ufmg/mes/shop/order/OrderPageResponse.java
+src/main/java/br/ufmg/mes/shop/order/OrderRepository.java
+src/main/java/br/ufmg/mes/shop/order/OrderResponse.java
+src/main/java/br/ufmg/mes/shop/order/OrderService.java
+src/main/java/br/ufmg/mes/shop/order/OrderStatus.java
+src/main/java/br/ufmg/mes/shop/order/OrderSummaryResponse.java
+src/main/java/br/ufmg/mes/shop/order/PurchaseOrder.java
 src/main/java/br/ufmg/mes/shop/security/SecurityConfiguration.java
-src/main/java/br/ufmg/mes/shop/user/AppUser.java
-src/main/java/br/ufmg/mes/shop/user/AppUserRepository.java
-src/main/java/br/ufmg/mes/shop/user/AppUserService.java
-src/main/java/br/ufmg/mes/shop/user/UserController.java
-src/main/java/br/ufmg/mes/shop/user/UserResponse.java
-src/main/java/br/ufmg/mes/shop/user/UserRole.java
-src/main/resources/application.yml
-src/main/resources/db/schema/V003__users.sql
-src/main/resources/db/demo/README.md
-src/main/resources/db/demo/V002__users.sql
-src/test/java/br/ufmg/mes/shop/FoundationIT.java
+src/main/resources/db/schema/V004__orders.sql
+src/test/java/br/ufmg/mes/shop/order/OrdersIT.java
 src/test/java/br/ufmg/mes/shop/product/CatalogIT.java
-src/test/java/br/ufmg/mes/shop/security/SecurityAdminIT.java
 src/test/java/br/ufmg/mes/shop/support/PostgresTestDatabase.java
+src/test/resources/db/catalog-fixture.sql
 src/test/resources/db/security-fixture.sql
-```
+~~~
 
-Não incluir .env, target, logs, caches ou temporários. Sem commit/staging feito pelo Codex; revisão e commits ficam com o autor.
+Não incluir .env, target, relatórios, logs, caches ou temporários. Nenhum staging/commit foi feito pelo Codex.

@@ -198,6 +198,8 @@ class CatalogIT {
         jdbc.execute("CREATE SCHEMA validation_probe");
         jdbc.execute("CREATE TABLE validation_probe.products (id BIGINT PRIMARY KEY)");
         jdbc.execute("CREATE TABLE validation_probe.app_users (LIKE shop.app_users INCLUDING ALL)");
+        jdbc.execute("CREATE TABLE validation_probe.purchase_orders (LIKE shop.purchase_orders INCLUDING ALL)");
+        jdbc.execute("CREATE TABLE validation_probe.order_items (LIKE shop.order_items INCLUDING ALL)");
         try {
             new WebApplicationContextRunner()
                     .withInitializer(new ConfigDataApplicationContextInitializer())

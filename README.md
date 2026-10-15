@@ -1,6 +1,6 @@
 # mes-legacy-shop
 
-Objeto de estudo do TP de MES. As Fases 1 a 3 fornecem a fundação local, o catálogo público, autenticação e administração de produtos. Ark e as migrações serão etapas posteriores. A construção inicial teve auxílio do Codex e requer revisão do autor.
+Objeto de estudo do TP de MES. As Fases 1 a 4 fornecem a fundação local, catálogo, segurança/administração e pedidos com estoque transacional. Ark e as migrações serão etapas posteriores. A construção inicial teve auxílio do Codex e requer revisão do autor.
 
 ## Versões e pré-requisitos
 
@@ -45,7 +45,7 @@ Edite .env antes de subir se necessário. O exemplo contém apenas credenciais l
 
 O Compose lê .env para POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD e POSTGRES_PORT. A aplicação no perfil `local` (padrão) importa o mesmo arquivo como propriedades, sem biblioteca dotenv ou script que execute seu conteúdo. Use o formato simples CHAVE=valor, sem aspas, expansão de shell ou escapes; mantenha valores compatíveis com ambos os leitores. Variáveis de ambiente do processo têm precedência. POSTGRES_HOST (localhost) e SERVER_PORT (8080) são opcionais para a aplicação. Em outro perfil, forneça as variáveis explicitamente; não há perfil de produção.
 
-Os scripts de `src/main/resources/db/schema` são montados em `/docker-entrypoint-initdb.d`, aplicados em ordem lexical **somente quando o volume está vazio**. V001__foundation.sql cria shop, V002__products.sql cria products e V003__users.sql cria app_users. Mudanças em scripts, usuário ou senha não reinicializam volumes existentes.
+Os scripts de `src/main/resources/db/schema` são montados em `/docker-entrypoint-initdb.d`, aplicados em ordem lexical **somente quando o volume está vazio**. V001__foundation.sql cria shop, V002__products.sql cria products, V003__users.sql cria app_users e V004__orders.sql cria purchase_orders/order_items. Mudanças em scripts, usuário ou senha não reinicializam volumes existentes.
 
 ## Build e teste essencial
 
@@ -61,7 +61,7 @@ Linux:
 sh ./mvnw -B -ntp clean verify
 ```
 
-`verify` compila, empacota o JAR executável, roda FoundationIT, CatalogIT e SecurityAdminIT pelo Failsafe e gera `target/site/jacoco/index.html` e jacoco.csv. Cada classe de integração cria PostgreSQL real em contêiner descartável/porta aleatória, com banco e credenciais exclusivos, aplica os mesmos SQLs V001/V002/V003 e inicia a aplicação. A suíte preserva as verificações de saúde e cobre catálogo, paginação, ativos/inativos, erros, persistência decimal, Bean Validation, restrições SQL e rejeição de esquema divergente. A suíte de segurança usa Basic, BCrypt e CSRF reais e cliente HTTP do Java 17, incluindo PATCH, sem mocks de autenticação. Não lê o banco de demonstração nem exige Compose previamente iniciado. A primeira execução também baixa imagens auxiliares fixadas pelo Testcontainers, como testcontainers/ryuk:0.7.0.
+`verify` compila, empacota o JAR executável, roda FoundationIT, CatalogIT, SecurityAdminIT e OrdersIT pelo Failsafe e gera `target/site/jacoco/index.html` e jacoco.csv. Cada classe de integração cria PostgreSQL real em contêiner descartável/porta aleatória, com banco e credenciais exclusivos, aplica os mesmos SQLs V001/V002/V003/V004 e inicia a aplicação. A suíte preserva as verificações de saúde e cobre catálogo, paginação, ativos/inativos, erros, persistência decimal, Bean Validation, restrições SQL e rejeição de esquema divergente. A suíte de segurança usa Basic, BCrypt e CSRF reais e cliente HTTP do Java 17, incluindo PATCH, sem mocks de autenticação. OrdersIT verifica cálculos, rollback multitem, preço histórico, isolamento, cancelamento e concorrência HTTP, filtros/resumo e restrições reais. Não lê o banco de demonstração nem exige Compose previamente iniciado. A primeira execução também baixa imagens auxiliares fixadas pelo Testcontainers, como testcontainers/ryuk:0.7.0.
 
 `test`/`package` isoladamente não executam a integração; use **verify** como verificação principal. Docker indisponível deve fazer o teste falhar, sem skip automático, H2 ou substituição por mocks. Resultados ficam em target/failsafe-reports. O nível de log do teste é INFO, mantendo erros e stack traces completos.
 
@@ -97,7 +97,7 @@ Linux:
 curl --fail http://127.0.0.1:8080/actuator/health
 ```
 
-Resposta esperada: HTTP 200 e `{"status":"UP"}`. Sem detalhes ou componentes sensíveis; a saúde inclui o DataSource. /actuator/env não é exposto. JPA estabelece a conexão durante a inicialização. Catálogo e saúde são públicos. As rotas de usuário/CSRF exigem Basic; administração de produtos exige ADMIN. Pedidos pertencem à próxima fase.
+Resposta esperada: HTTP 200 e `{"status":"UP"}`. Sem detalhes ou componentes sensíveis; a saúde inclui o DataSource. /actuator/env não é exposto. JPA estabelece a conexão durante a inicialização. Catálogo e saúde são públicos. As rotas de usuário/CSRF exigem Basic; administração de produtos exige ADMIN. Pedidos exigem CUSTOMER ou proprietário/ADMIN conforme a seção da Fase 4.
 
 ## Esquema, volume existente e dados de demonstração
 
@@ -258,6 +258,91 @@ docker compose up -d --wait
 
 A redefinição acima é destrutiva e só se destina à base local descartável. Não foi necessário apagar volumes para mascarar falhas de testes. As verificações executadas, tentativas que falharam e limitações estão em [docs/STATUS.md](docs/STATUS.md).
 
+## Pedidos — Fase 4
+
+Banco novo já aplica V001–V004. Para um volume das Fases 1–3, aplique somente os scripts que faltam, em ordem. V004 exige products/app_users e não é repetível: confira antes com SELECT to_regclass('shop.purchase_orders'). Se a tabela existir, inspecione o esquema em vez de repetir ou apagar dados. A aplicação deve estar parada durante a atualização.
+
+PowerShell, depois de confirmar que V004 ainda não foi aplicado:
+
+~~~powershell
+Get-Content src/main/resources/db/schema/V004__orders.sql -Raw | docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+~~~
+
+Linux:
+
+~~~sh
+docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < src/main/resources/db/schema/V004__orders.sql
+~~~
+
+V004 é transacional, preserva produtos/usuários e cria pedidos/itens sem exclusão em cascata. Depois inicie a aplicação normalmente. Não é necessário reinicializar o volume. Carregue os dados de demonstração anteriores se ainda não existirem.
+
+Somente CUSTOMER cria/lista os próprios pedidos. Proprietário ou ADMIN consulta/cancela por ID; outro cliente recebe o mesmo 404 do pedido ausente. A compra recebe apenas items com productId/quantity, entre 1 e 100 produtos distintos, quantidades inteiras positivas. O servidor calcula valores e baixa estoque em uma transação. Preços contratados não mudam com reajustes; cancelar restitui uma única vez, inclusive com chamadas simultâneas. CSRF permanece obrigatório.
+
+Exemplo PowerShell completo, com a aplicação iniciada e MUG-001 disponível:
+
+~~~powershell
+$apiBase = 'http://127.0.0.1:8080'
+$product = (Invoke-RestMethod "$apiBase/api/products").content | Where-Object sku -eq 'MUG-001' | Select-Object -First 1
+if (!$product -or $product.stockQuantity -lt 2) { throw 'MUG-001 precisa de duas unidades disponíveis' }
+$authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('cliente1@local.test:Cliente1-local-123!'))
+$authHeaders = @{ Authorization = $authorization }
+$token = Invoke-RestMethod "$apiBase/api/csrf" -Headers $authHeaders -SessionVariable orderSession
+$writeHeaders = @{ Authorization = $authorization }
+$writeHeaders[$token.headerName] = $token.token
+$payload = @{ items=@(@{ productId=$product.id; quantity=2 }) } | ConvertTo-Json -Depth 4
+$response = Invoke-WebRequest "$apiBase/api/orders" -Method Post -Headers $writeHeaders -WebSession $orderSession -ContentType 'application/json' -Body $payload
+$created = $response.Content | ConvertFrom-Json
+$response.StatusCode
+$created
+Invoke-RestMethod "$apiBase/api/orders/$($created.id)" -Headers $authHeaders
+Invoke-RestMethod "$apiBase/api/orders?page=0&size=20" -Headers $authHeaders
+
+$adminHeaders = @{ Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('admin@local.test:Admin-local-123!')) }
+Invoke-RestMethod "$apiBase/api/admin/orders?customerId=$($created.customerId)&status=CREATED" -Headers $adminHeaders
+Invoke-RestMethod "$apiBase/api/admin/reports/orders?customerId=$($created.customerId)" -Headers $adminHeaders
+
+$token = Invoke-RestMethod "$apiBase/api/csrf" -Headers $authHeaders -WebSession $orderSession
+$writeHeaders[$token.headerName] = $token.token
+$cancelled = Invoke-RestMethod "$apiBase/api/orders/$($created.id)/cancel" -Method Post -Headers $writeHeaders -WebSession $orderSession
+$token = Invoke-RestMethod "$apiBase/api/csrf" -Headers $authHeaders -WebSession $orderSession
+$writeHeaders[$token.headerName] = $token.token
+$again = Invoke-RestMethod "$apiBase/api/orders/$($created.id)/cancel" -Method Post -Headers $writeHeaders -WebSession $orderSession
+$cancelled
+$again
+~~~
+
+O exemplo deixa um pedido CANCELLED preservado e restitui as duas unidades, sem excluir o histórico. Em dados novos, MUG-001 custa 39.90: quantidade 2 resulta em total 79.80. Se o autor alterou preço/estoque, o resultado acompanha os dados atuais.
+
+Exemplo POSIX com curl/awk/sed (confira product_id no catálogo antes; 1 corresponde a MUG-001 na carga nova):
+
+~~~sh
+api_base='http://127.0.0.1:8080'
+demo_auth='cliente1@local.test:Cliente1-local-123!'
+product_id=1
+curl --fail --silent --show-error "$api_base/api/products"
+cookie_file=$(mktemp)
+trap 'rm -f "$cookie_file"' EXIT
+curl --fail --silent --show-error --user "$demo_auth" --cookie "$cookie_file" --cookie-jar "$cookie_file" "$api_base/api/csrf" > /dev/null
+csrf_token=$(awk '$6 == "XSRF-TOKEN" {print $7}' "$cookie_file")
+created=$(curl --fail --silent --show-error --user "$demo_auth" --cookie "$cookie_file" --cookie-jar "$cookie_file" \
+  -H "X-XSRF-TOKEN: $csrf_token" -H 'Content-Type: application/json' \
+  --data "{\"items\":[{\"productId\":$product_id,\"quantity\":1}]}" "$api_base/api/orders") || exit 1
+printf '%s\n' "$created"
+order_id=$(printf '%s\n' "$created" | sed -n 's/.*"id":\([0-9][0-9]*\).*/\1/p')
+test -n "$order_id" || exit 1
+curl --fail --silent --show-error --user "$demo_auth" "$api_base/api/orders/$order_id"
+curl --fail --silent --show-error --user "$demo_auth" --cookie "$cookie_file" --cookie-jar "$cookie_file" "$api_base/api/csrf" > /dev/null
+csrf_token=$(awk '$6 == "XSRF-TOKEN" {print $7}' "$cookie_file")
+curl --fail --silent --show-error --user "$demo_auth" --cookie "$cookie_file" --cookie-jar "$cookie_file" \
+  -H "X-XSRF-TOKEN: $csrf_token" -X POST "$api_base/api/orders/$order_id/cancel"
+curl --fail --silent --show-error --user 'admin@local.test:Admin-local-123!' "$api_base/api/admin/reports/orders"
+~~~
+
+O sed acima extrai o campo id da resposta compacta desta aplicação; não é um parser JSON geral. O roteiro preserva um pedido CANCELLED e devolve o estoque.
+
+GET /api/admin/orders aceita customerId, status (CREATED/CANCELLED), start/end e page/size. GET /api/admin/reports/orders aceita customerId/start/end, exclui cancelados e retorna orderCount/total. Datas são instantes UTC ISO-8601 com Z, por exemplo start=2026-10-15T00:00:00Z&end=2026-10-16T00:00:00Z, filtradas sobre createdAt: início inclusivo/fim exclusivo. Sem datas considera todo o histórico; intervalo vazio/invertido é inválido. Listas ordenam id decrescente, page padrão 0 e size 20 (até 100), envelope como catálogo.
+
+Falhas de item desfazem a compra inteira: produto ausente 404 PRODUCT_NOT_FOUND, inativo 409 PRODUCT_INACTIVE, estoque insuficiente 409 INSUFFICIENT_STOCK; produto repetido/entrada inválida 400 INVALID_REQUEST. Pedido ausente/de outro cliente retorna 404 ORDER_NOT_FOUND. Reposição acima do limite inteiro retorna 409 STOCK_LIMIT_EXCEEDED e desfaz todo o cancelamento. Contrato completo em docs/ESPECIFICACAO.md.
 ## Documentação e próxima fase
 
-[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor. O próximo passo, mediante nova solicitação, é a Fase 4: pedidos, isolamento, atomicidade, cancelamento e concorrência. Essa fase não foi iniciada.
+[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor. O próximo passo, mediante nova solicitação, é a Fase 5: consolidação, evaluation/ independente e preparação da baseline. Nenhum avaliador externo ou experimento Ark foi iniciado.

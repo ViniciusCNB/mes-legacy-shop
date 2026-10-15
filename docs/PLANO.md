@@ -22,6 +22,6 @@ Após validar a aplicação, fixar versões concretas de Boot 3.5.x e 4.0.x, Ark
 
 - Fase 1 concluída e commitada pelo autor em 502c36c.
 - Fase 2 concluída e commitada pelo autor em f452ab5; PostgreSQL local permanece em 5432.
-- Fase 3 autorizada nesta continuação: usuários, HTTP Basic/BCrypt, política de sessão/CSRF e administração de produtos/estoque. Entregas e verificações reais em STATUS.md.
-- Próximo passo, mediante nova solicitação: Fase 4, Pedidos, incluindo atomicidade, isolamento, cancelamento e concorrência.
-- Nenhum experimento Ark ou migração de framework é autorizado pelas três primeiras fases.
+- Fase 3 concluída e commitada pelo autor em 6778cd2.
+- Fase 4 autorizada nesta continuação: pedidos, atomicidade, isolamento, cancelamento, concorrência e resumo/filtros. Entregas e resultados reais em STATUS.md. Próximo passo, mediante nova solicitação: Fase 5, Consolidação, incluindo evaluation/ independente.
+- Nenhum experimento Ark ou migração de framework é autorizado pelas quatro primeiras fases.

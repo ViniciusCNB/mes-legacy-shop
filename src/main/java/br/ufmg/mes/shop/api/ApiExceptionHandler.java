@@ -6,6 +6,9 @@ import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolationException;
 
+import br.ufmg.mes.shop.order.InvalidOrderRequestException;
+import br.ufmg.mes.shop.order.OrderConflictException;
+import br.ufmg.mes.shop.order.OrderNotFoundException;
 import br.ufmg.mes.shop.product.ProductNotFoundException;
 import br.ufmg.mes.shop.product.SkuAlreadyExistsException;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,25 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiError orderNotFound(OrderNotFoundException exception) {
+        return new ApiError("ORDER_NOT_FOUND", exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(OrderConflictException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiError orderConflict(OrderConflictException exception) {
+        return new ApiError(exception.getCode(), exception.getMessage(), List.of());
+    }
+
+    @ExceptionHandler(InvalidOrderRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError invalidOrder(InvalidOrderRequestException exception) {
+        return new ApiError("INVALID_REQUEST", "Parâmetros inválidos",
+                List.of(new ApiError.FieldError(exception.getField(), exception.getMessage())));
+    }
 
     @ExceptionHandler(ProductNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -43,7 +65,7 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError invalidType(MethodArgumentTypeMismatchException exception) {
         return new ApiError("INVALID_REQUEST", "Parâmetros inválidos",
-                List.of(new ApiError.FieldError(exception.getName(), "deve ser um inteiro válido")));
+                List.of(new ApiError.FieldError(exception.getName(), "valor inválido para o parâmetro")));
     }
 
     @ExceptionHandler(SkuAlreadyExistsException.class)
