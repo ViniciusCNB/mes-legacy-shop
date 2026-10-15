@@ -17,3 +17,10 @@ Stack inicial preservada; ambiente reconstruível; comportamentos da ESPECIFICAC
 ## Experimento posterior (planejamento)
 
 Após validar a aplicação, fixar versões concretas de Boot 3.5.x e 4.0.x, Ark/modelo/prompt, ferramentas, limites e assistência permitida. Começar cada repetição da mesma baseline limpa. Registrar build, testes, inicialização, HTTP, persistência, alterações, tokens e custo. Identificar intervenções humanas; a segunda etapa depende de uma versão intermediária válida e não deve ser atribuída integralmente ao Ark quando houver correção assistida.
+
+## Andamento em 15/10/2026
+
+- Fase 1 concluída e commitada pelo autor em 502c36c.
+- Fase 2 autorizada pelo autor: catálogo público e retorno da porta local PostgreSQL a 5432. Implementação e testes relacionados estão nesta alteração; resultados finais em STATUS.md.
+- A Fase 3 será o próximo passo, somente mediante nova solicitação: usuários, HTTP Basic/BCrypt, política de sessão/CSRF e administração de produtos/estoque.
+- Nenhum experimento Ark ou migração de framework é autorizado pelas duas primeiras fases.

@@ -1,5 +1,11 @@
-# Dados de demonstração
+# Dados locais de demonstração
 
-Ainda não há carga de demonstração na Fase 1. A partir da Fase 2, manter aqui
-scripts SQL explícitos de dados locais, separados do esquema e das fixtures de teste.
-Esta pasta não é montada no diretório de inicialização do PostgreSQL.
+V001__products.sql cria três produtos ativos (incluindo um com estoque zero) e um
+inativo. A carga é explícita e usa ON CONFLICT (sku) DO NOTHING: repetir não
+sobrescreve produtos existentes. IDs não são fixados e sequências podem ter lacunas.
+
+Execute depois de aplicar os scripts de esquema V001 e V002. Os comandos Windows e
+Linux estão no README da raiz. Esta pasta não é montada na inicialização do banco.
+
+A fixture src/test/resources/db/catalog-fixture.sql é independente desta carga e
+apaga dados antes de cada teste em PostgreSQL descartável. Nunca a aplique na base local.

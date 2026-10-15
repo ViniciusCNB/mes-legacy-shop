@@ -1,107 +1,110 @@
 # Status
 
-Atualização: 15/10/2026, America/Sao_Paulo. **Fase 1 — Fundação implementada e verificada no Windows.** Nenhuma Fase 2 iniciada. Revisão do autor e reprodução nativa em Linux pendentes. Nenhum commit, staging ou tag feito pelo Codex; HEAD permanece b093498 (Initial commit).
+Atualização: 15/10/2026, America/Sao_Paulo. **Fase 2 — Catálogo implementada e verificada.** A Fase 1 foi commitada pelo autor em `502c36c`. Nenhum commit, staging ou tag foi feito pelo Codex nesta continuação. A Fase 3 não foi iniciada.
 
-## Entregue
+## Entrega atual
 
-- Projeto Maven br.ufmg.mes:mes-legacy-shop:0.0.1-SNAPSHOT, Boot 2.7.18 e Java 17; ponto de entrada ShopApplication.
-- Wrapper oficial 3.3.2 only-script para Windows/POSIX, Maven 3.9.11 e SHA256 fixos; Enforcer 3.4.1 para verificar JDK/Maven.
-- Web, Actuator, JPA, validação, JDBC PostgreSQL e teste gerenciados pelo Boot. BOM Testcontainers 1.19.8 adicional fixado; JaCoCo 0.8.11; Failsafe/Surefire 2.22.2 do parent.
-- Compose PostgreSQL 16.10-bookworm com digest fixo, volume, healthcheck e porta local 15432. .env.example e import nativo do .env no perfil local. .env real ignorado.
-- GET /actuator/health sem componentes/detalhes; apenas saúde exposta. Conexão participa do resultado.
-- SQL V001 cria somente esquema shop. Caminhos separados para esquema e futuras cargas locais. Hibernate validate, SQL automático da aplicação desligado, open-in-view=false e UTC JDBC.
-- FoundationIT com PostgreSQL real descartável, aplicação em porta aleatória e assertions de versão, esquema e HTTP. Sem H2, mocks de conexão ou skip por ausência de Docker.
-- AGENTS, README, contexto, especificação, plano, decisões e este registro. README inicial continha somente o título; foi expandido preservando-o. Não havia outra base ou instrução existente nos caminhos inspecionados.
+- Mantidos Boot 2.7.18, Java 17, Maven Wrapper 3.9.11, PostgreSQL 16.10 e todas as versões/dependências da Fundação. POM e SQL V001 de esquema não foram alterados.
+- Product em shop.products, com Long/IDENTITY, SKU único, nome, BigDecimal/numeric(19,2), estoque não negativo e situação ativa. Bean Validation javax e restrições PostgreSQL para as regras aplicáveis.
+- V002__products.sql aplicado explicitamente ao volume preservado da Fundação. Banco novo aplica V001 e V002 pelo entrypoint; os testes verificam essa inicialização em contêineres novos. Não houve exclusão de volume ou troca de banco.
+- GET /api/products público, somente ativos, paginação e totais, ordem fixa id crescente; GET /api/products/{id} público, com 404 idêntico para inativo e ausente. Produto ativo sem estoque permanece visível.
+- DTOs de produto/página, serviço de leitura transacional e erros code/message/fieldErrors. Parâmetros inválidos retornam 400. Não há rotas administrativas, de escrita ou de pedidos.
+- Carga local explícita: três produtos ativos, incluindo um sem estoque, e um inativo. Repetição por SKU não duplica nem sobrescreve produtos existentes. Fixture do teste é separada.
+- Porta local **5432** em Compose, .env.example, fallback JDBC e .env local, conforme solicitação do autor. Final de linha LF explícito para .env.example e .gitattributes.
+- Documentação e instruções atualizadas; sem frontend, segurança antecipada, integrações externas ou migração Ark.
 
-## Ambiente e versões observadas
+## Verificações efetivamente executadas
 
-Windows 11 amd64; Microsoft OpenJDK 17.0.15+6-LTS selecionado explicitamente em JAVA_HOME (`C:\Users\vinic\.jdks\ms-17.0.15`). Não foi alterado o Java global da máquina. Maven 3.9.11; Docker Engine 27.5.1 (API 1.47, mínimo 1.24), Docker Desktop 4.38.0, Compose 2.32.4-desktop.1; daemon Linux amd64.
+Ambiente: Windows 11 amd64; Microsoft OpenJDK 17.0.15 selecionado em JAVA_HOME; Maven 3.9.11; Docker Engine 27.5.1/API 1.47, daemon Linux amd64; Compose 2.32.4. Imagem PostgreSQL preservada por digest: sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74.
 
-Imagem: `postgres:16.10-bookworm@sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74`. Consulta real retornou PostgreSQL 16.10 (Debian 16.10-1.pgdg12+1), esquema shop. No Testcontainers, a referência equivalente usa postgres@sha256 com o mesmo digest.
-
-Grafo resolvido por dependency:tree: Spring Boot 2.7.18; Hibernate 5.6.15.Final; JDBC PostgreSQL 42.3.8; JUnit Jupiter 5.8.2; módulos Testcontainers 1.19.8. A combinação compilou e executou o teste real. O arquivo completo filtrado está em target/dependency-tree.txt, gerado e não versionado.
-
-## Comandos efetivamente executados e resultados
-
-Os comandos Maven abaixo usaram JAVA_HOME com JDK 17. Os comandos completos de reprodução Windows/Linux estão no README.
-
-| Comando/verificação | Resultado observado |
+| Comando/verificação | Resultado real |
 | --- | --- |
-| Leitura integral do documento do autor; inspeção de arquivos, Git e AGENTS ancestrais | Documento acessível; repositório com somente README, Git limpo e commit inicial; sem instruções adicionais encontradas |
-| java -version com JDK selecionado; .\mvnw.cmd -v | Java 17.0.15; Maven 3.9.11 |
-| Plugin org.apache.maven.plugins:maven-wrapper-plugin:3.3.2:wrapper com '-Dmaven=3.9.11' '-Dtype=only-script' | Geração oficial concluída com BUILD SUCCESS |
-| Download Maven 3.9.11 ZIP e comparação com SHA512 oficial | Conferência aprovada; SHA256 calculado 0d7125e8c91097b36edb990ea5934e6c68b4440eef4ea96510a0f6815e7eeadb, fixado no Wrapper |
-| docker version; docker compose version | Cliente/daemon acessíveis fora da restrição de sandbox |
-| docker pull postgres:16.10-bookworm | Download concluído, digest registrado; sem latest |
-| docker compose config --quiet | Configuração final válida, saída zero |
-| docker compose up -d --wait; docker compose ps | Saudável em 127.0.0.1:15432; V001 aplicado pelo entrypoint em volume inicialmente novo |
-| SQL via pipe para docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' | SELECT de versão e information_schema confirmou PostgreSQL 16.10 e esquema shop; comando usa variáveis do contêiner |
-| .\mvnw.cmd -B -ntp clean verify (configuração final) | **BUILD SUCCESS**, finalizado 17:10:01 -03:00, duração 1min25s; 1 teste, 0 falhas, 0 erros, 0 ignorados |
-| .\mvnw.cmd -B -ntp dependency:tree '-Dincludes=org.springframework.boot:*,org.hibernate:hibernate-core,org.postgresql:postgresql,org.junit.jupiter:*,org.testcontainers:*' '-DoutputFile=target/dependency-tree.txt' | BUILD SUCCESS; versões resolvidas registradas acima |
-| .\mvnw.cmd -B -ntp spring-boot:run; curl.exe --fail http://127.0.0.1:8080/actuator/health | Aplicação iniciou no perfil local usando .env; HTTP 200, {"status":"UP"} |
-| GET /actuator/env na aplicação local | HTTP 404; não expõe configuração |
-| java -jar target/mes-legacy-shop-0.0.1-SNAPSHOT.jar | JAR executável iniciou conectado ao banco Compose; HTTP 200/UP |
-| docker compose stop postgres; GET /actuator/health no JAR | HTTP 503, {"status":"DOWN"}, sem detalhes |
-| docker compose up -d --wait; GET /actuator/health no mesmo JAR | Banco saudável; HTTP 200, {"status":"UP"} novamente |
-| Git Bash: bash -n mvnw; bash ./mvnw -v | Sintaxe aprovada e execução com saída zero; Maven 3.9.11 / JDK 17.0.15. Isso não é execução nativa Linux |
-| git diff --check; git diff --cached --name-only; git check-ignore .env target/site/jacoco/index.html | Sem erro de whitespace no diff rastreado; index vazio; .env e target ignorados |
+| Inspeção de AGENTS, README, docs, código e Git | Árvore inicialmente limpa; commit 502c36c contém a Fundação; escopo limitado à Fase 2 |
+| .\mvnw.cmd -B -ntp test-compile com JDK 17 | BUILD SUCCESS; produção e testes compilaram |
+| Primeiro .\mvnw.cmd -B -ntp clean verify | BUILD FAILURE: daemon Docker indisponível, 2 erros de inicialização das classes, 0 ignorados; nenhum teste foi desabilitado |
+| docker version / _ping | HTTP 500 antes do reinício do Docker Desktop pelo autor; depois daemon respondeu normalmente |
+| clean verify após reinício | BUILD SUCCESS, 30 execuções sem falhas/erros/ignorados; versão anterior ao reforço dos checks de texto em branco |
+| **.\mvnw.cmd -B -ntp clean verify final** | **BUILD SUCCESS**, 33 execuções (FoundationIT: 1; CatalogIT: 32, incluindo parametrizações), **0 falhas, 0 erros, 0 ignorados**. Finalizado 18:16:22 -03:00, duração 1min56s |
+| docker compose config --quiet | Configuração válida |
+| Primeiro Compose na porta 5432 após recuperar o daemon | Falhou: porta ainda ocupada pelo PostgreSQL 14/main do Ubuntu/WSL, não pelo projeto |
+| wsl -d Ubuntu -u root -- pg_ctlcluster 14 main stop | Executado somente após autorização explícita do autor; cluster confirmado down. Nenhum WSL inteiro, banco ou volume foi apagado; serviço não foi desabilitado |
+| docker compose up -d --wait; docker compose ps | PostgreSQL deste projeto saudável em 127.0.0.1:5432, preservando o volume existente |
+| SELECT to_regclass('shop.products') antes de atualizar | Tabela ausente no volume da Fase 1; V001 já presente |
+| Get-Content src/main/resources/db/schema/V002__products.sql -Raw, via pipe para psql do Compose | CREATE TABLE, saída zero; aplicado somente V002 |
+| Carga db/demo/V001__products.sql via mesmo psql, duas vezes | Primeira: INSERT 0 4; segunda: INSERT 0 0; quatro linhas preservadas, três ativas e uma inativa |
+| java -jar target/mes-legacy-shop-0.0.1-SNAPSHOT.jar com JDK 17 | Iniciou com JPA/validate e banco Compose em 5432; HTTP em 127.0.0.1:8080 |
+| GET /actuator/health | HTTP 200, {"status":"UP"} |
+| GET /api/products?page=0&size=2 | HTTP 200; IDs 1 e 2, totalElements=3, totalPages=2 |
+| GET /api/products?page=1&size=2 | HTTP 200; ID 3 com estoque zero; inativo ID 4 não aparece nem entra nos totais |
+| GET /api/products/1 | HTTP 200; somente id/sku/name/price/stockQuantity, preço 39.90 |
+| GET /api/products/4 e /api/products/999 | HTTP 404 e o mesmo JSON PRODUCT_NOT_FOUND/Produto não encontrado |
+| GET /api/products?size=101 | HTTP 400, INVALID_REQUEST, fieldErrors com size |
+| GET /api/admin/products; POST /api/products | Respectivamente 404 e 405; administração e escrita não foram expostas |
+| curl.exe --fail para saúde, página size=2 e detalhe /1, conforme README | Saída zero e JSONs esperados |
+| git diff --check; git diff --cached --name-only | Sem erro de whitespace; nenhum arquivo staged |
 
-O teste integrou Hibernate e JDBC ao PostgreSQL 16 real e verificou o servidor HTTP com perfil test. A base Compose e o banco do teste são independentes. Contêineres do teste foram descartados pelo Testcontainers/Ryuk. Ao terminar a verificação, a aplicação foi encerrada e o serviço Compose foi parado, preservando o volume e o .env local. Para retomar: docker compose up -d --wait.
+O psql foi executado com `docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`, recebendo o SQL por pipe. Os comandos completos Windows/Linux para banco novo, volume existente e demonstração estão no README.
 
-### Cobertura medida
+## O que os testes comprovaram
 
-JaCoCo em target/site/jacoco: ShopApplication, 1/3 linhas (**33,33%**), 3/8 instruções (**37,50%**), 1/2 métodos (**50%**), sem branches. Só existe a classe de bootstrap; o main não é chamado pelo teste SpringBootTest. Não foram criados testes de baixo valor para aumentar esses números. Esses valores não representam cobertura de regras do e-commerce, ainda inexistentes.
+- Conexão com PostgreSQL 16 real, esquema inicial, saúde HTTP sem detalhes e não exposição de /actuator/env.
+- Filtro ativo/inativo no resultado e nos totais, ordenação por ID independente da ordem de inserção, paginação, catálogo vazio e página além do resultado.
+- Detalhe em DTO e mesma resposta 404 para ausente/inativo; parâmetros negativos, limites e erros de tipo/overflow retornam o contrato 400.
+- Persistência com identidade e valor decimal exato até a precisão contratada, sem uso de double/float para dinheiro.
+- Bean Validation rejeita dados inválidos antes de persistir, sem deixar linha adicional; SQL também rejeita SKU duplicado, preço zero, estoque negativo e textos compostos somente por espaços/tabulação quando JPA é ignorado.
+- A configuração real da aplicação recusa iniciar contra um esquema de teste com coluna mapeada ausente. A mensagem ERROR/Schema-validation no log é **esperada e assertada nesse teste negativo**; não é falha escondida do build. O namespace validation_probe existe somente no PostgreSQL descartável do teste e é removido ao final.
 
-## Falhas encontradas e resolução
+JaCoCo final: **80/83 linhas (96,39%)** e **270/278 instruções (97,12%)**; sem branches instrumentados. As três linhas não cobertas pertencem ao main e ao getter isActive; não foram criados testes de getters para elevar cobertura. Esses números não medem as regras futuras de pedidos/segurança. Relatórios em target/site/jacoco e target/failsafe-reports, não versionados.
 
-1. Dentro do sandbox, rede não resolvia repo.maven.apache.org e o named pipe dockerDesktopLinuxEngine retornava Access is denied. Execuções com acesso ampliado foram autorizadas e funcionaram. Não há impedimento remanescente de download/Docker nesta máquina; não houve substituição de tecnologia.
-2. Primeira geração do Wrapper com argumento -Dmaven sem aspas no PowerShell terminou com Unknown lifecycle phase .9.11. Reexecutada com argumentos entre aspas, com sucesso. O projeto final fixa 3.9.11.
-3. Primeiro Compose tentou 5432 e falhou por porta ocupada. Nenhum processo externo foi alterado. .env.example, fallback da conexão e Compose passaram a usar 15432; inicialização e SQL confirmados.
-4. Uma consulta SQL inicialmente falhou por aspas aninhadas no shell; corrigida usando SQL via pipe. O comando real de psql com variáveis do contêiner foi validado e consta no README.
-5. O primeiro clean verify com a tag fixa passou. Ao acrescentar o digest, houve dois builds com 1 erro/0 ignorados: o inicial e uma repetição diagnóstica com stack trace completo. Testcontainers 1.19.8 interpretava tag@digest como nome de repositório incompatível. A referência no teste foi corrigida para postgres@sha256, sem substituir a imagem ou declarar compatibilidade artificial. O clean verify final passou mantendo todas as assertions.
-6. Failsafe 2.22.2 produziu dump não bloqueante de PpidChecker (Cannot use PPID process information, fallback interno NOOP) neste ambiente Windows. Não é erro de teste; o resumo final confirma 1 execução e zero falhas/erros/ignorados. A configuração de verificação não foi desativada. Reavaliar somente se afetar uma execução posterior.
+## Incidentes e estado deixado no ambiente
 
-Logs de desenvolvimento em `C:\Users\vinic\AppData\Local\Temp`: mes-foundation-verify.log (primeiro sucesso), mes-foundation-final-verify.log e mes-foundation-diagnostic.log (falhas ao acrescentar digest), mes-foundation-accepted-verify.log (sucesso final), mes-foundation-run.log e mes-foundation-jar.log (execuções). Não versionados. Relatórios finais em target/failsafe-reports e target/site/jacoco; clean os remove.
+O impedimento inicial era do daemon Docker, não da stack. A falha foi registrada em vez de usar H2, skip ou alterar versões. O autor reiniciou o Docker Desktop. A porta 5432 ainda estava encaminhada por wslrelay.exe para postgres PID 368 no Ubuntu; pg_lsclusters identificou 14/main online. O autor autorizou explicitamente parar esse cluster externo, que agora permanece parado.
+
+A aplicação JAR de verificação foi encerrada. **O PostgreSQL do projeto permanece saudável em 5432**, com V001/V002 aplicados e os quatro produtos locais. Para executar a API, selecionar JAVA_HOME com JDK 17 e usar `.\mvnw.cmd spring-boot:run` (ou o JAR), conforme README. Contêineres dos testes são descartáveis e foram removidos pelo Testcontainers/Ryuk.
+
+Logs não versionados em C:\Users\vinic\AppData\Local\Temp: mes-catalog-compile.log, mes-catalog-verify.log (falha de Docker), mes-catalog-post-restart-verify.log (sucesso intermediário), mes-catalog-final-verify.log (sucesso final) e mes-catalog-jar.log. clean remove os relatórios de target. O histórico detalhado da Fundação está no STATUS.md do commit 502c36c.
 
 ## Limitações e próximo passo
 
-- Linux nativo não foi executado. Há Wrapper oficial POSIX, finais de linha LF, comandos com sh e sintaxe/execução verificadas no Git Bash; confirmar o fluxo completo em Linux antes do experimento.
-- Hibernate validate está configurado, mas sem entidades não demonstra compatibilidade de tabelas, queries de domínio, transações ou concorrência. A Fase 2 deverá testar o esquema Product real e a rejeição de divergência de mapeamento.
-- Ainda não há dados de demonstração, segurança ou regras do e-commerce. O teste de saúde não é avaliador comportamental do domínio. Protocolo e baseline final não definidos.
-- A ausência de Docker não foi simulada nesta tarefa; @Testcontainers mantém o padrão de falhar quando não há daemon, sem disabledWithoutDocker ou perfil de opt-in.
-- A revisão humana solicitada pela referência continua pendente; a verificação do Codex não substitui a revisão do autor.
+- Execução da aplicação/build em Linux nativo continua não verificada. Os comandos POSIX e Wrapper oficial foram preservados; a execução POSIX no Git Bash foi verificada na Fase 1. O uso do daemon Linux não equivale a validar o build nativo Linux.
+- Não há autenticação, usuários locais, escrita administrativa, pedidos, concorrência de compras ou avaliação externa. Esses itens continuam nas fases correspondentes.
+- Revisão do autor sobre o código, testes e decisões desta fase permanece pendente. Não há baseline experimental completa nem experimento Ark iniciado.
 
-**Próximo passo autorizado apenas em nova solicitação: Fase 2 — Catálogo.** Criar Product, próximo SQL versionado, dados locais e consultas públicas com paginação/validação, verificando ativos/inativos e persistência em PostgreSQL; sem administração ou pedidos.
+**Próximo passo: Fase 3 — Segurança e administração**, somente mediante nova solicitação. Implementar AppUser, usuários locais com BCrypt/ADMIN/CUSTOMER, HTTP Basic, política documentada de sessão/CSRF, /api/me e operações administrativas de produtos/estoque; verificar bloqueios e ausência de exposição de credenciais. Não iniciar pedidos nessa fase.
 
 ## Commit sugerido para o autor
 
-Um commit atômico para esta fase: **feat: implementa fundação com Boot 2.7.18 e PostgreSQL 16**.
+Um commit atômico: **feat: implementa catálogo público e usa PostgreSQL local em 5432**.
 
-Arquivos a incluir (todos os 22 arquivos modificados/novos desta tarefa):
+Arquivos desta alteração (26):
 
 ```text
 .env.example
 .gitattributes
-.gitignore
-.mvn/wrapper/maven-wrapper.properties
 AGENTS.md
 README.md
 compose.yaml
-mvnw
-mvnw.cmd
-pom.xml
 docs/CONTEXTO_TP.md
 docs/DECISOES.md
 docs/ESPECIFICACAO.md
 docs/PLANO.md
 docs/STATUS.md
-src/main/java/br/ufmg/mes/shop/ShopApplication.java
 src/main/resources/application.yml
-src/main/resources/application-local.yml
-src/main/resources/db/schema/V001__foundation.sql
+src/main/resources/db/schema/V002__products.sql
 src/main/resources/db/demo/README.md
+src/main/resources/db/demo/V001__products.sql
+src/main/java/br/ufmg/mes/shop/api/ApiError.java
+src/main/java/br/ufmg/mes/shop/api/ApiExceptionHandler.java
+src/main/java/br/ufmg/mes/shop/product/Product.java
+src/main/java/br/ufmg/mes/shop/product/ProductRepository.java
+src/main/java/br/ufmg/mes/shop/product/ProductService.java
+src/main/java/br/ufmg/mes/shop/product/ProductController.java
+src/main/java/br/ufmg/mes/shop/product/ProductResponse.java
+src/main/java/br/ufmg/mes/shop/product/ProductPageResponse.java
+src/main/java/br/ufmg/mes/shop/product/ProductNotFoundException.java
 src/test/java/br/ufmg/mes/shop/FoundationIT.java
-src/test/resources/logback-test.xml
+src/test/java/br/ufmg/mes/shop/product/CatalogIT.java
+src/test/resources/db/catalog-fixture.sql
 ```
 
-Não incluir .env, target, caches ou logs. Não há commit nem arquivo staged pelo Codex. O manifesto acima é sugestão para revisão e execução pelo autor, não uma instrução de commit automático.
+Não incluir .env, target, logs ou caches. .env local foi alterado somente para a porta solicitada e permanece ignorado. POM, Wrapper e V001 de esquema permanecem no commit anterior, sem alteração. O Codex não realizou commit ou staging.

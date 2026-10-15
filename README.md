@@ -1,6 +1,6 @@
 # mes-legacy-shop
 
-Objeto de estudo do TP de MES, mestrado da UFMG, de Vinícius Borges, com o professor Marco Tulio Valente. A Fase 1 entrega somente a fundação local da API. Ark e as migrações serão etapas posteriores. A construção inicial teve auxílio do Codex e requer revisão do autor.
+Objeto de estudo do TP de MES. As Fases 1 e 2 fornecem a fundação local e o catálogo público de produtos. Ark e as migrações serão etapas posteriores. A construção inicial teve auxílio do Codex e requer revisão do autor.
 
 ## Versões e pré-requisitos
 
@@ -41,11 +41,11 @@ docker compose up -d --wait
 docker compose ps
 ```
 
-Edite .env antes de subir se necessário. O exemplo contém apenas credenciais locais de demonstração, ignoradas no Git quando copiadas para .env. A porta padrão do host é **15432**, pois 5432 já estava ocupada no ambiente de validação. O banco continua em 5432 dentro do contêiner; a porta do host é publicada somente em 127.0.0.1.
+Edite .env antes de subir se necessário. O exemplo contém apenas credenciais locais de demonstração, ignoradas no Git quando copiadas para .env. A porta padrão do host é **5432**, por solicitação do autor após liberar o uso dessa porta. O banco continua em 5432 dentro do contêiner; a porta do host é publicada somente em 127.0.0.1.
 
 O Compose lê .env para POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD e POSTGRES_PORT. A aplicação no perfil `local` (padrão) importa o mesmo arquivo como propriedades, sem biblioteca dotenv ou script que execute seu conteúdo. Use o formato simples CHAVE=valor, sem aspas, expansão de shell ou escapes; mantenha valores compatíveis com ambos os leitores. Variáveis de ambiente do processo têm precedência. POSTGRES_HOST (localhost) e SERVER_PORT (8080) são opcionais para a aplicação. Em outro perfil, forneça as variáveis explicitamente; não há perfil de produção.
 
-Os scripts de `src/main/resources/db/schema` são montados em `/docker-entrypoint-initdb.d`, aplicados em ordem lexical **somente quando o volume está vazio**. V001__foundation.sql cria o esquema shop. Mudanças em scripts, usuário ou senha não reinicializam volumes existentes.
+Os scripts de `src/main/resources/db/schema` são montados em `/docker-entrypoint-initdb.d`, aplicados em ordem lexical **somente quando o volume está vazio**. V001__foundation.sql cria o esquema shop e V002__products.sql cria a tabela products. Mudanças em scripts, usuário ou senha não reinicializam volumes existentes.
 
 ## Build e teste essencial
 
@@ -61,7 +61,7 @@ Linux:
 sh ./mvnw -B -ntp clean verify
 ```
 
-`verify` compila, empacota o JAR executável, roda FoundationIT pelo Failsafe e gera `target/site/jacoco/index.html` e jacoco.csv. O teste cria PostgreSQL real em contêiner descartável/porta aleatória, com banco e credenciais exclusivos, aplica o mesmo SQL, inicia a aplicação e verifica versão 16, esquema, saúde HTTP e ausência de exposição de /actuator/env. Não lê o banco de demonstração nem exige Compose previamente iniciado. A primeira execução também baixa imagens auxiliares fixadas pelo Testcontainers, como testcontainers/ryuk:0.7.0.
+`verify` compila, empacota o JAR executável, roda FoundationIT e CatalogIT pelo Failsafe e gera `target/site/jacoco/index.html` e jacoco.csv. Cada classe de integração cria PostgreSQL real em contêiner descartável/porta aleatória, com banco e credenciais exclusivos, aplica os mesmos SQLs V001/V002 e inicia a aplicação. A suíte preserva as verificações de saúde e cobre catálogo, paginação, ativos/inativos, erros, persistência decimal, Bean Validation, restrições SQL e rejeição de esquema divergente. Não lê o banco de demonstração nem exige Compose previamente iniciado. A primeira execução também baixa imagens auxiliares fixadas pelo Testcontainers, como testcontainers/ryuk:0.7.0.
 
 `test`/`package` isoladamente não executam a integração; use **verify** como verificação principal. Docker indisponível deve fazer o teste falhar, sem skip automático, H2 ou substituição por mocks. Resultados ficam em target/failsafe-reports. O nível de log do teste é INFO, mantendo erros e stack traces completos.
 
@@ -97,11 +97,27 @@ Linux:
 curl --fail http://127.0.0.1:8080/actuator/health
 ```
 
-Resposta esperada: HTTP 200 e `{"status":"UP"}`. Sem detalhes ou componentes sensíveis; a saúde inclui o DataSource. /actuator/env não é exposto. JPA estabelece a conexão durante a inicialização. Catálogo, autenticação, administração e pedidos não existem nesta fase.
+Resposta esperada: HTTP 200 e `{"status":"UP"}`. Sem detalhes ou componentes sensíveis; a saúde inclui o DataSource. /actuator/env não é exposto. JPA estabelece a conexão durante a inicialização. O catálogo público está disponível; autenticação, administração e pedidos pertencem às próximas fases.
 
-## SQL versionado e ciclo do banco
+## Esquema, volume existente e dados de demonstração
 
-Acrescente scripts de esquema V002__, V003__ etc. nas fases correspondentes; não altere silenciosamente um script já aplicado. A carga local terá scripts separados em db/demo, sem aplicação automática. Ainda não há produtos/usuários de demonstração. Fixtures de teste devem ser isoladas dos dados locais. Não há Flyway/Liquibase ou tabela automática de histórico: em banco existente, registre manualmente os scripts aplicados, em ordem, ou reconstrua a base experimental.
+A aplicação não aplica SQL: Hibernate usa `ddl-auto=validate` e falha quando o mapeamento diverge das tabelas. Não há Flyway/Liquibase ou histórico automático de scripts. Preserve V001; acrescente novos scripts versionados nas fases correspondentes.
+
+**Banco novo:** `docker compose up -d --wait` com volume vazio aplica V001 e V002 em ordem, sem carga de demonstração automática.
+
+**Volume existente da Fase 1:** ele já contém shop, mas ainda não products. Depois de subir o Compose, aplique **somente V002**, uma vez. PowerShell:
+
+```powershell
+Get-Content src/main/resources/db/schema/V002__products.sql -Raw | docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+```
+
+Linux:
+
+```sh
+docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < src/main/resources/db/schema/V002__products.sql
+```
+
+Não reaplique V001 nem V002 em uma base que já os recebeu. Antes de decidir, consulte `SELECT to_regclass('shop.products');` no psql: null indica tabela ausente. Os scripts falham em duplicação para evitar esconder o estado real do banco. Registre os scripts aplicados ao volume; inicie a aplicação somente após a atualização do esquema.
 
 Para abrir psql usando as variáveis do contêiner (PowerShell e Linux):
 
@@ -109,19 +125,39 @@ Para abrir psql usando as variáveis do contêiner (PowerShell e Linux):
 docker compose exec postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
-Para aplicar explicitamente o script inicial **em um banco onde V001 ainda não foi aplicado**, PowerShell:
+Para carregar os produtos de demonstração explicitamente, PowerShell:
 
 ```powershell
-Get-Content src/main/resources/db/schema/V001__foundation.sql -Raw | docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+Get-Content src/main/resources/db/demo/V001__products.sql -Raw | docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 ```
 
 Linux:
 
 ```sh
-docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < src/main/resources/db/schema/V001__foundation.sql
+docker compose exec -T postgres sh -c 'exec psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < src/main/resources/db/demo/V001__products.sql
 ```
 
-Não repita V001 sobre o banco inicializado pelo Compose: CREATE SCHEMA falhará por esquema existente. A aplicação não aplica SQL e usa Hibernate `ddl-auto=validate`; ainda não há tabelas mapeadas para validar. A Fase 2 deverá comprovar validação de tabelas e persistência.
+A carga tem três produtos ativos (um com estoque zero) e um inativo. Pode ser repetida por SKU, preservando produtos existentes e alterações locais; não há exclusão/reinicialização de dados por essa carga. Ainda não há usuários de demonstração. A fixture de teste é separada e só deve ser aplicada nos contêineres descartáveis, pois apaga produtos.
+
+## Consultar o catálogo
+
+PowerShell:
+
+```powershell
+curl.exe --fail 'http://127.0.0.1:8080/api/products?page=0&size=2'
+curl.exe --fail 'http://127.0.0.1:8080/api/products/1'
+```
+
+Linux:
+
+```sh
+curl --fail 'http://127.0.0.1:8080/api/products?page=0&size=2'
+curl --fail 'http://127.0.0.1:8080/api/products/1'
+```
+
+O ID 1 é um exemplo: use um ID retornado no seu catálogo. O JSON da listagem contém content, page, size, totalElements e totalPages. Produto contém somente id, sku, name, price (BRL) e stockQuantity. A ordem é fixa por id crescente; page padrão 0, máximo 1.000.000; size padrão 20, de 1 a 100. Inativos não aparecem nem entram nos totais. Sem estoque ainda é visível se ativo. Página além da última é vazia; catálogo vazio retorna totalPages=0.
+
+Detalhe inexistente ou inativo: 404 PRODUCT_NOT_FOUND. Parâmetros inválidos: 400 INVALID_REQUEST com fieldErrors. Exemplos JSON e contrato completo em docs/ESPECIFICACAO.md. Não há endpoints de criação/edição de produto nesta fase.
 
 Para parar preservando os dados: `docker compose stop`. Para remover o contêiner e a rede preservando o volume: `docker compose down`.
 
@@ -136,4 +172,4 @@ A redefinição acima é destrutiva e só se destina à base local descartável.
 
 ## Documentação e próxima fase
 
-[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor; somente a Fundação está implementada. A próxima solicitação poderá implementar a Fase 2, Catálogo, sem rotas administrativas.
+[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor. O próximo passo, mediante nova solicitação, é a Fase 3: segurança e administração. A Fase 2 não introduz rotas administrativas.

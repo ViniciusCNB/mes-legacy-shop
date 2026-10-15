@@ -14,6 +14,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.MountableFile;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,7 +29,10 @@ class FoundationIT {
             .withDatabaseName("shop_test")
             .withUsername("shop_test")
             .withPassword("shop_test")
-            .withInitScript("db/schema/V001__foundation.sql");
+            .withCopyFileToContainer(MountableFile.forClasspathResource("db/schema/V001__foundation.sql"),
+                    "/docker-entrypoint-initdb.d/V001__foundation.sql")
+            .withCopyFileToContainer(MountableFile.forClasspathResource("db/schema/V002__products.sql"),
+                    "/docker-entrypoint-initdb.d/V002__products.sql");
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {

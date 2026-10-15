@@ -1,7 +1,7 @@
 # Instruções de trabalho
 
 - Leia README.md e docs/{CONTEXTO_TP,ESPECIFICACAO,PLANO,STATUS,DECISOES}.md antes de alterar a aplicação.
-- Implemente somente a fase solicitada. A Fase 1 não inclui entidades de domínio, catálogo, segurança ou pedidos.
+- Implemente somente a fase solicitada. A Fase 2 inclui somente Product, catálogo público, SQL/dados locais e testes correspondentes. Segurança, administração e pedidos pertencem às fases seguintes.
 - Mantenha Java 17 sem preview, Spring Boot 2.7.18, Maven Wrapper 3.9.11 e PostgreSQL 16. Use o gerenciamento de dependências do Boot; justifique e fixe componentes adicionais.
 - Código em inglês, documentação em português; POJOs sem Lombok, organização por funcionalidade conforme surgirem funcionalidades. Não exponha entidades JPA na API.
 - SQL versionado em src/main/resources/db/schema; dados locais em db/demo. Hibernate usa validate; sem update, H2, Flyway ou Liquibase.

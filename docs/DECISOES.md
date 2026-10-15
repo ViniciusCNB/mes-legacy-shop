@@ -1,6 +1,6 @@
 # Decisões
 
-Data: 15/10/2026. Decisões rotineiras executadas pelo Codex dentro da autorização do autor para a Fase 1; revisão humana pendente. Não atribuir essas escolhas individualmente ao professor. O contexto relata a orientação acadêmica e distingue as propostas.
+Data: 15/10/2026. Decisões rotineiras executadas pelo Codex dentro da autorização do autor por fase; revisão humana das novas alterações pendente. A tabela inicial preserva o histórico da Fase 1, commitada pelo autor em 502c36c. Não atribuir essas escolhas individualmente ao professor. O contexto relata a orientação acadêmica e distingue as propostas.
 
 | Escolha | Estado e justificativa |
 | --- | --- |
@@ -28,4 +28,23 @@ Data: 15/10/2026. Decisões rotineiras executadas pelo Codex dentro da autoriza�
 
 ## Reservado às próximas fases
 
-Estratégia de concorrência, DTOs, paginação, semântica completa dos filtros, configuração Security/CSRF/sessão e dados de demonstração serão decididos quando implementados. As regras da referência permanecem no contrato proposto, sem aprovação presumida de alterações. Nenhuma decisão experimental final, execução Ark, baseline/tag ou commit foi feita.
+Estratégia de concorrência, DTOs/paginação de pedidos, semântica completa dos filtros e configuração Security/CSRF/sessão serão decididos nas próximas fases. DTOs, paginação e dados locais de produtos foram definidos na Fase 2. As regras da referência permanecem no contrato proposto, sem aprovação presumida de alterações. Não há decisão experimental final, execução Ark ou baseline/tag. O Codex não faz commits; o autor registrou a Fase 1 em 502c36c.
+
+## Fase 2 — Catálogo
+
+Autorizada pelo autor após o commit 502c36c da Fundação. Detalhes abaixo são escolhas de implementação, não novas orientações acadêmicas atribuídas ao professor.
+
+| Escolha | Justificativa e estado |
+| --- | --- |
+| Porta 5432 | Solicitação explícita do autor; substitui a escolha local 15432 da Fase 1. Atualizados Compose, fallback JDBC, .env.example e somente a variável POSTGRES_PORT no .env local. |
+| Product em shop.products | Long/IDENTITY, varchar(64) para SKU, varchar(160) para nome, numeric(19,2) para preço, inteiro de estoque e boolean ativo. Não cria usuários, pedidos ou rotas de escrita. |
+| Validação Bean Validation e SQL | javax.validation gerenciado pelo Boot valida antes de persistir. Banco exige preço positivo, estoque não negativo, textos não brancos e SKU único. SKU é sensível a maiúsculas/minúsculas; sem normalização implícita. |
+| V002 sem editar V001 | Banco novo aplica os dois scripts em ordem pelo entrypoint. Volume da Fundação recebe V002 explicitamente, preservando dados. Sem Flyway/Liquibase ou ddl-auto=update. |
+| DTOs próprios e serviço transacional de leitura | ProductResponse e ProductPageResponse evitam serializar entidades ou o formato interno PageImpl do Spring. Organização simples por funcionalidade em product; erros HTTP comuns em api. |
+| Paginação com ordem fixa | page=0/size=20 por padrão, size até 100, ordenação id crescente. page até 1.000.000 evita offset fora do intervalo do JPA mesmo com size=100. Produto sem estoque permanece no catálogo se ativo. |
+| Erros mínimos | Inativo/ausente têm o mesmo 404 PRODUCT_NOT_FOUND. Parâmetros inválidos retornam 400 INVALID_REQUEST e fieldErrors. Não introduzir erros e contratos de escrita administrativa antes da Fase 3. |
+| Carga local explícita por SKU | db/demo/V001__products.sql cria três ativos (um sem estoque) e um inativo; ON CONFLICT DO NOTHING permite repetição sem sobrescrever alterações. Não é executada automaticamente nem usada como fixture dos testes. |
+| Testes reais sem dependências adicionais | FoundationIT preserva saúde e passa a inicializar V001/V002; CatalogIT cobre HTTP/JPA/constraints/validação de esquema em outro contêiner PostgreSQL. Schema inválido é criado somente em namespace descartável do teste; código e SQL reais permanecem corretos. |
+| Stack preservada | POM e versões da Fundação permanecem inalterados; nenhuma biblioteca nova foi necessária. |
+
+Resultados, incidentes do ambiente e limitações estão em STATUS.md. Segurança/administração ficam para a Fase 3; o protocolo experimental e a revisão acadêmica continuam separados da execução técnica.
