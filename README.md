@@ -365,7 +365,7 @@ Evidências locais ficam em target/evaluation-runs/<projeto>; resultados interno
 java tools/SourceMetrics.java
 ~~~
 
-O [candidato a baseline](docs/BASELINE.md) identifica a fonte da aplicação, o snapshot do contrato/avaliador e o roteiro de revisão. O autor ainda precisa revisar e registrar o commit completo antes de considerar a tag baseline-boot-2.7. A construção e os testes não iniciam migração ou experimento Ark.
+O [candidato a baseline](docs/BASELINE.md) identifica a fonte da aplicação, o snapshot do contrato/avaliador e o roteiro de revisão. O autor registrou o commit completo em 1e8ea40; a revisão formal ainda precede uma eventual tag baseline-boot-2.7. A construção e os testes não iniciam migração ou experimento Ark.
 ## Documentação e próxima fase
 
-[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor. A Fase 5 está documentada em evaluation/README.md e docs/BASELINE.md. O próximo passo é a revisão/commit do autor e a definição posterior do protocolo experimental. Nenhuma tag ou execução Ark foi iniciada.
+[Contexto acadêmico](docs/CONTEXTO_TP.md), [especificação](docs/ESPECIFICACAO.md), [plano](docs/PLANO.md), [decisões](docs/DECISOES.md) e [estado real](docs/STATUS.md). As regras do e-commerce são propostas do autor. A Fase 5 está documentada em evaluation/README.md e docs/BASELINE.md. O [protocolo experimental](docs/EXPERIMENTO.md) descreve a preparação da primeira tentativa em tarefa isolada. Nenhuma migração ou tag foi iniciada.

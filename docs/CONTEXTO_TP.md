@@ -22,6 +22,6 @@ Codex auxilia na construção inicial, configuração, documentação e testes; 
 
 O objeto é controlado e recém-construído: não representa integralmente anos de manutenção. Três mil linhas são referência, nunca meta artificial. Na consolidação, contar separadamente produção, testes e infraestrutura. Não fabricar incompatibilidades ou complexidade.
 
-O avaliador externo da Fase 5 ficará fora do pacote entregue ao agente de migração. O protocolo definirá arquivos excluídos, assistência humana, orçamento, repetições e evidências. O código da aplicação em 4979132 é candidato à baseline, com a consolidação da Fase 5 ainda dependente de revisão/commit do autor. Não há experimento iniciado.
+O avaliador externo da Fase 5 ficará fora do pacote entregue aos agentes. Após sugestão do professor relatada pelo autor, a primeira comparação inclui uma tentativa com Codex/GPT‑6.1 Sol Alto antes do Ark. A baseline consolidada está em 1e8ea40; o [protocolo experimental](EXPERIMENTO.md) define a entrada, a assistência, o orçamento, as repetições e as evidências da primeira etapa. O pacote foi preparado; nenhuma tentativa de migração foi iniciada.
 
 Referências de contexto fornecidas pelo autor: [Alura](https://www.alura.com.br/alura-labs/como-migramos-do-spring-boot-2-para-o-4-com-ajuda-de-ia), [Ark](https://github.com/mtov/ark), [FreshBrew](https://github.com/mrcabbage972/freshbrew). Sua menção não indica reprodução ou validação desses trabalhos nesta fase.

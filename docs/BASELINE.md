@@ -4,7 +4,7 @@
 
 Código da aplicação candidato: commit 4979132ee7fb6f0f589104abc999ed3f189dee82 (Fase 4). A consolidação não modifica src/, pom.xml, Compose local ou as regras HTTP. O build do artefato e sua avaliação estão em STATUS.md; o SHA256 identifica o JAR efetivamente executado, sem prometer JARs idênticos byte a byte em builds distintos.
 
-O snapshot inicial do avaliador é 1.0.0, registrado em evaluation/SNAPSHOT.sha256 juntamente com a especificação. O autor ainda precisa revisar esta entrega e fazer seu commit completo da Fase 5. Esse novo hash deve identificar a baseline consolidada antes de qualquer tag baseline-boot-2.7. Nenhum commit/tag, pacote de entrega ou experimento foi criado nesta tarefa.
+O snapshot inicial do avaliador é 1.0.0, registrado em evaluation/SNAPSHOT.sha256 juntamente com a especificação. O autor registrou a consolidação da Fase 5 em 1e8ea40939d92023df8dab81b64506c8f83a9ca6. Esse é o ponto de partida do pacote experimental; a revisão formal e eventual tag baseline-boot-2.7 continuam com o autor. Nenhuma migração foi iniciada.
 
 ## Roteiro de revisão e reprodução
 
@@ -13,7 +13,7 @@ O snapshot inicial do avaliador é 1.0.0, registrado em evaluation/SNAPSHOT.sha2
 3. Executar evaluation/run.ps1 ou evaluation/run.sh. Cada execução cria banco novo com SQL/fixtures conhecidos, inicia o JAR e roda o avaliador externo.
 4. Conferir relatórios internos/externos, logs de inicialização, hash do JAR, estado final e limpeza do ambiente descartável. Preservar logs fora de target antes de novo clean.
 5. Executar java tools/SourceMetrics.java e conferir cobertura JaCoCo da aplicação. Linhas físicas incluem comentários; não são meta de tamanho ou SLOC.
-6. O autor revisa os fluxos principais e registra seu commit candidato completo; somente depois considerar a tag. Os resultados do gerador não substituem revisão humana.
+6. O autor revisa os fluxos principais no commit candidato completo; somente depois considerar a tag. Os resultados do gerador não substituem revisão humana.
 
 Não é necessário apagar o banco local para reproduzir a avaliação: seus recursos são separados. A preparação do avaliador aplica SQL de esquema pelo entrypoint do PostgreSQL novo e fixtures explicitamente; a aplicação continua validate e não cria tabelas.
 
@@ -28,7 +28,7 @@ Não é necessário apagar o banco local para reproduzir a avaliação: seus rec
 
 O avaliador externo, suas fixtures/roteiros, snapshots e resultados não devem fazer parte do pacote visível ao agente de migração. .git, caches, .env real, target, credenciais pessoais e patches de referência também não pertencem ao pacote. Testes internos e instruções necessárias de build/execução devem permanecer acessíveis.
 
-A lista exata de arquivos e a redação do README/AGENTS do pacote serão definidas no protocolo experimental; não aplicar exclusões cegamente enquanto esses documentos ainda tiverem referências a arquivos de planejamento. Nenhum pacote foi montado ou entregue ao Ark.
+O [protocolo da primeira etapa](EXPERIMENTO.md) define o pacote com lista explícita, README/AGENTS próprios e exclusão do avaliador. O pacote foi preparado para a tentativa com Codex; ainda não foi entregue ao Ark.
 
 ## Métricas físicas
 
@@ -46,4 +46,4 @@ Cobertura de instruções/linhas/ramos é outra medida, produzida pelo JaCoCo e 
 
 ## Antes de autorizar o experimento
 
-Ainda são decisões de protocolo: versões alvo concretas, Ark/modelo/prompt, orçamento/tempo/iterações, repetições, assistência humana, insumos disponíveis ao agente, arquivamento de evidências e eventuais comparações. Não foram fixadas nem executadas nesta fase. Cada execução futura deverá começar da mesma baseline limpa e distinguir migração autônoma de assistência. A segunda etapa depende de intermediário validado.
+O [protocolo mes-boot35-v1](EXPERIMENTO.md) fixa o alvo 3.5.16, a primeira condição Codex/GPT‑6.1 Sol Alto, o pacote e a política de execução. A revisão/configuração do Ark deve ser definida antes da sua tentativa. A etapa de Boot 4 depende de um intermediário validado.

@@ -24,5 +24,9 @@ Após validar a aplicação, fixar versões concretas de Boot 3.5.x e 4.0.x, Ark
 - Fase 2 concluída e commitada pelo autor em f452ab5; PostgreSQL local permanece em 5432.
 - Fase 3 concluída e commitada pelo autor em 6778cd2.
 - Fase 4 concluída e commitada pelo autor em 4979132.
-- Fase 5: consolidação técnica implementada, avaliador independente e reprodução com banco novo. Resultados reais em STATUS.md; revisão e commit completos permanecem com o autor. Próximo passo: revisão da baseline e definição posterior do protocolo, sem iniciar Ark.
+- Fase 5: consolidação concluída e commitada pelo autor em 1e8ea40. Resultados reais em STATUS.md.
 - Nenhum experimento Ark ou migração de framework é autorizado pelas cinco fases de construção.
+
+## Preparação experimental em 07/11/2026
+
+Primeira comparação: Boot 2.7.18 → 3.5.16, começando com Codex e GPT‑6.1 Sol Alto. O [protocolo mes-boot35-v1](EXPERIMENTO.md) define o pacote, a avaliação independente e as regras de execução. A tentativa acontecerá em tarefa separada; não foi iniciada nesta preparação.

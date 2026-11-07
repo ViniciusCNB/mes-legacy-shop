@@ -1,0 +1,7 @@
+Migre este projeto de Spring Boot 2.7.18 para Spring Boot 3.5.16. Faça apenas esta etapa.
+
+Leia AGENTS.md, README.md e docs/ESPECIFICACAO.md. Mantenha Java 17, Maven Wrapper 3.9.11 e PostgreSQL 16. Preserve o contrato HTTP e as regras de negócio, inclusive persistência, autenticação, CSRF e concorrência de estoque. Preserve as verificações comportamentais da suíte interna; adapte a integração com o framework quando necessário, sem ignorar testes ou reduzir assertions.
+
+Trabalhe só nesta pasta, com inspeção, edição e testes locais. Downloads das dependências e imagens necessárias são permitidos. Não use busca na web, outros agentes ou receitas de migração externas. Não faça commits nem tags.
+
+Execute a verificação completa descrita no README. Ao encerrar, liste as alterações, os comandos e resultados observados e os bloqueios que permanecerem. Informe claramente se o projeto não compilou ou se alguma verificação falhou.

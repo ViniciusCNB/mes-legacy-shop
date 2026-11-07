@@ -1,5 +1,54 @@
 # Status
 
+## Preparação experimental — 07/11/2026
+
+**Pronta para a primeira tentativa em tarefa nova.** Alvo Spring Boot **3.5.16**, a partir de **2.7.18** no commit **1e8ea40939d92023df8dab81b64506c8f83a9ca6**. A primeira condição é Codex desktop + **GPT‑6.1 Sol (Alto)**. A preparação não executou uma migração, não iniciou o Ark, não criou tarefa nova, commit ou tag.
+
+- [Protocolo mes-boot35-v1](EXPERIMENTO.md): uma tentativa exploratória por condição, até 45 minutos por tentativa, mesma entrada e avaliação, intervenções registradas. Revisão/configuração do Ark ficará para a preparação da segunda condição.
+- ZIP: .experiment-local/input/mes-legacy-shop-boot-3.5.16-input.zip. Manifesto JSON ao lado, fora do ZIP. Gerador: experiments/New-MigrationInput.ps1.
+- SHA256 do ZIP: 77a806f21c689fb493b0ae85d02f60c4c7af549c0a888fd7c93a07e8b0b1ebcf.
+- SHA256 do prompt.txt: 278c5cb64daeb607d06136db420f58a597f69dd33608ee59c67df6304c70e807.
+- Pacote com 71 arquivos. Código, SQL, testes, Wrapper e POM vêm do commit fixado; contrato público e instruções foram preparados para a tarefa. Avaliador externo, .git, .env real e resultados ficam fora.
+- O repositório original continua em Boot 2.7.18; src/, POM, Compose, AGENTS.md original e os insumos do snapshot do avaliador não foram alterados.
+
+### Verificações reais
+
+| Verificação | Resultado |
+| --- | --- |
+| Duas gerações do ZIP e tentativa de sobrescrita | Mesmo SHA256 nas duas gerações; saída existente recusada. |
+| Extração independente no diretório temporário | 71 arquivos, hashes conferidos, entradas restritas à lista explícita; arquivos originais conferidos com os blobs do commit considerando CRLF do Wrapper Windows. |
+| Integridade do avaliador | SHA256 do snapshot e nove insumos conferidos; versão 1.0.0 inalterada. |
+| .\mvnw.cmd -B -ntp clean verify na cópia isolada | **123 testes, 0 falhas, 0 erros, 0 skips**, BUILD SUCCESS, 2:06. |
+| .\evaluation\run.ps1 -ApplicationJar com o JAR dessa cópia | **26 testes, 0 falhas, 0 erros, 0 skips**, BUILD SUCCESS, 24,181s; aplicação Boot 2.7.18 iniciada e testada em PostgreSQL descartável. |
+
+JDK Microsoft 17.0.15, Docker Engine 27.5.1, Compose 2.32.4-desktop.1. O Docker Desktop foi iniciado para as verificações. O contêiner e volume da avaliação externa foram removidos pelo roteiro; o volume local não foi reinicializado. O JAR avaliado nesta preparação tem SHA256 93997ec33be7be99a14adaef22035c1e30a26b28a6ea39b25e7a219c129a84e6.
+
+Evidências locais: .experiment-local/preflight/mes-boot35-preflight-8197e240/ (input-check.json, build.log, relatórios Failsafe, external.log e arquivos da avaliação externa). Elas comprovam a baseline do pacote; não contam como resultado de migração.
+
+### Próximo passo
+
+Revisar o protocolo, extrair o ZIP em uma pasta nova fora do repositório, abrir essa pasta em uma tarefa nova do Codex desktop, selecionar GPT‑6.1 Sol / Alto e enviar o prompt.txt. Usar nova extração, não a cópia de validação com target/ preenchido.
+
+Commit sugerido para o autor: **chore: prepara experimento de migração para Spring Boot 3.5**.
+
+~~~text
+.gitignore
+README.md
+docs/BASELINE.md
+docs/CONTEXTO_TP.md
+docs/EXPERIMENTO.md
+docs/PLANO.md
+docs/STATUS.md
+experiments/New-MigrationInput.ps1
+experiments/input/AGENTS.md
+experiments/input/README.md
+experiments/input/prompt.txt
+~~~
+
+Não incluir .experiment-local/, relatórios ou temporários. A revisão formal da baseline e eventual tag permanecem com o autor.
+
+## Histórico — Fase 5 (15/10/2026)
+
 Atualização: 15/10/2026, America/Sao_Paulo. **Implementação e verificações técnicas da Fase 5 — Consolidação concluídas.** A Fase 4 foi commitada pelo autor em 4979132; a pasta estava limpa ao iniciar. Revisão humana, commit completo e eventual tag permanecem com o autor. Nenhum commit, staging, tag, pacote para o Ark ou experimento foi feito.
 
 ## Entregue
