@@ -1,5 +1,13 @@
 # Status
 
+## Análise complementar — barra final e CSRF (10/11/2026)
+
+Análise post hoc, fora do avaliador congelado e da classificação das tentativas. O roteiro experiments/supplementary/probe-behaviors.sh sondou por HTTP a baseline 2.7.18 e os JARs da claude-01 e da codex-03, com PostgreSQL 16.10 descartável.
+
+- **Barra final:** na baseline, 7 rotas aceitavam barra final. A claude-01 passou a responder 404 em todas. A codex-03 preservou as 5 administrativas, mas GET /api/products/ e GET /api/orders/ passaram a 404. A especificação não define barra final; não há violação do contrato escrito.
+- **CSRF:** os três JARs se comportaram igual: token igual ao cookie, cookie renovado após escrita autenticada, token antigo rejeitado.
+- Registro: .experiment-local/analysis/probe-20261110/ (ANALISE.md, comparison.tsv, evidências).
+
 ## Tentativa codex-03 — 10/11/2026
 
 Em 10/11/2026, a tentativa `codex-03-55119509` concluiu a migração de Spring Boot 2.7.18 para **3.5.16** sob o protocolo `mes-boot35-v1` com as emendas v2 e v3. A tarefa nova usou **GPT‑6.1 Sol / Médio** e Acesso total desde o primeiro turno. A execução levou **5min44s**, de 10:09:14 a 10:14:58 (UTC−03:00). A mensagem manteve o texto integral do `prompt.txt`, com um LF adicional no fim.
