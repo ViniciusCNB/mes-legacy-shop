@@ -63,3 +63,15 @@ Pacote validado em 07/11/2026: 71 arquivos; SHA256 do ZIP 77a806f21c689fb493b0ae
 | Resultado | Classificação, limite atingido, pendências e eventual assistência técnica em rodada separada. |
 
 Mantenha o registro fora da pasta fornecida ao agente. Os resultados dessa preparação não são uma migração: a validação do pacote ainda executa a baseline Boot 2.7.18.
+
+## Emenda v2 — 09/11/2026 (registrada antes da nova tentativa)
+
+**Motivo.** As duas tentativas da condição Codex + GPT‑6.1 Sol (Alto) foram classificadas como **bloqueio de infraestrutura**. Na codex-01, a saída foi validada depois (123 internos e 26 externos, sem correções), mas a tentativa não concluiu os testes dentro do relógio. A codex-02 foi interrompida pelo autor. Os logs do Docker Desktop 4.38 mostram a causa. A economia de recursos (Resource Saver) pausou a VM do motor 5 minutos após o último contêiner, às 17:05:31 (−03:00) de 09/11. A VM não retomou, e o proxy passou a responder no route to host e HTTP 500. As evidências ficam em .experiment-local/records/.
+
+**Mudança de ambiente (vale para todas as tentativas seguintes).** Resource Saver desligado no Docker Desktop, conferido antes do envio do prompt, com o motor ainda respondendo após mais de 5 minutos sem contêineres. As demais versões do ambiente permanecem e são registradas por tentativa. A pasta da tentativa fica fora do OneDrive, para evitar sincronização de target/.
+
+**Nova condição.** Fica acrescentada a condição **Claude Code desktop (aba Code) + claude-opus-5-5, esforço Médio (medium)**, em sessão nova sem o histórico de construção. O modo de permissão é auto: o agente executa comandos sem aprovação manual. Valem o mesmo ZIP (SHA256 77a806f2…ebcf), o mesmo prompt.txt sem alterações, o limite de 45 minutos, o avaliador congelado e as regras de assistência humana. A instrução sem outros agentes do prompt.txt abrange os subagentes do cliente.
+
+**Operador.** A sessão é criada e acompanhada por outra sessão do Claude Code, que conhece o histórico do projeto e mantém evaluation/. Essa sessão apenas envia o prompt.txt como mensagem inicial. A ferramenta de criação de sessão exige um campo de contexto, preenchido somente com a identificação neutra da tentativa, sem pistas de migração. A sessão operadora não interage com o agente durante a tentativa, salvo para comunicar indisponibilidade do ambiente, registrada como intervenção.
+
+**Status das condições.** As tentativas do Codex permanecem como evidência e não são descartadas. Uma nova tentativa Codex sob o ambiente corrigido é opcional e, se feita, segue esta emenda. Na condição Ark, o modelo e o esforço serão fixados antes da tentativa. Preferencialmente, devem ser os mesmos desta condição; caso contrário, a diferença é registrada. Continua sendo um estudo de caso exploratório, com uma tentativa válida por condição.

@@ -1,5 +1,23 @@
 # Status
 
+## Tentativa claude-01 — 10/11/2026
+
+**Sucesso sob as regras.** Claude Code + Opus 5.5 (Médio) migrou o pacote congelado de Spring Boot 2.7.18 para **3.5.16** em cerca de 4min25s (00:05:22–00:09:47, −03:00), sem intervenções. A condição foi registrada antes do envio na [emenda v2 do protocolo](EXPERIMENTO.md).
+
+| Verificação | Resultado |
+| --- | --- |
+| Ambiente: Resource Saver desligado; baseline em cópia separada; Docker ocioso por 7 min | 123 testes OK; o motor não pausou e executou PostgreSQL 16.10 depois do período ocioso |
+| Agente: clean verify | 123 testes, 0 falhas/erros/skips |
+| Operador: clean verify em cópia independente da saída | 123 testes, 0 falhas/erros/skips; Spring Boot v3.5.16 |
+| Avaliador externo 1.0.0 contra o JAR do agente (SHA256 8e466963…30d6) | **26 testes, 0 falhas/erros/skips** |
+
+- O diff tem 20 arquivos alterados, nenhum adicionado ou removido: POM, javax → jakarta e Security 6 (requestMatchers e handler CSRF sem máscara). No teste, mudou só um import.
+- Causa das falhas do Codex: o Resource Saver do Docker Desktop 4.38 pausou a VM e ela não retomou. Ele foi desligado para as tentativas seguintes.
+- O run.ps1 do avaliador não roda no Windows PowerShell 5.1 (NativeCommandError em java -version) e não há PowerShell 7 instalado. A avaliação usou o run.sh do mesmo snapshot, que não foi alterado.
+- Evidências: .experiment-local/records/claude-01-20261109-2350/ (RESULTADO.md, transcrição, saída, diff, JAR, logs).
+- Branch experimento/claude-boot-3.5.16, criada a partir de 1e8ea40 no worktree C:\Users\vinic\mes-experimentos\branch-claude-boot-3.5.16. Ela recebeu os 20 arquivos da saída, conferidos contra a base, sem commit. Na branch, `.\mvnw.cmd -B -ntp clean verify` deu 123 testes, 0 falhas/erros/skips, Spring Boot v3.5.16. README, AGENTS.md e docs/ da branch continuam descrevendo a baseline 2.7.18.
+- Pendências: o autor revisar e commitar docs/EXPERIMENTO.md e docs/STATUS.md na main e a saída na branch; fixar a configuração do Ark.
+
 ## Preparação experimental — 07/11/2026
 
 **Pronta para a primeira tentativa em tarefa nova.** Alvo Spring Boot **3.5.16**, a partir de **2.7.18** no commit **1e8ea40939d92023df8dab81b64506c8f83a9ca6**. A primeira condição é Codex desktop + **GPT‑6.1 Sol (Alto)**. A preparação não executou uma migração, não iniciou o Ark, não criou tarefa nova, commit ou tag.
