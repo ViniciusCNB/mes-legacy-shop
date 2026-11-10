@@ -190,3 +190,22 @@ tools/SourceMetrics.java
 ~~~
 
 Não incluir .env, target, evaluation/target, logs, caches ou temporários. Nenhum staging/commit foi feito pelo Codex.
+
+## Experimento de migração — Codex 03
+
+Em 10/11/2026, a tentativa `codex-03-55119509` concluiu a migração de Spring Boot 2.7.18 para **3.5.16** sob o protocolo `mes-boot35-v1` com as emendas v2 e v3. A tarefa nova usou **GPT‑6.1 Sol / Médio** e Acesso total desde o primeiro turno. A execução levou **5min44s**, de 10:09:14 a 10:14:58 (UTC−03:00). A mensagem manteve o texto integral do `prompt.txt`, com um LF adicional no fim.
+
+| Verificação | Resultado |
+| --- | --- |
+| Baseline em cópia separada | 123 testes aprovados com JDK 17.0.15 e PostgreSQL 16.10. |
+| Docker Desktop 4.38.0 | Resource Saver desligado. O motor Linux respondeu após 6min03s sem início de contêineres e permaneceu acessível durante a tentativa e as verificações. |
+| `clean verify` na saída do agente | 124 testes aprovados. Os 123 casos originais foram preservados. |
+| `clean verify` em cópia independente | 124 testes aprovados, com zero falhas, erros ou skips. |
+| Avaliador congelado 1.0.0 contra o JAR original | 26 testes HTTP aprovados, com zero falhas, erros ou skips. Os nove insumos do snapshot foram conferidos. |
+| `clean verify` no worktree da branch | 124 testes aprovados, com zero falhas, erros ou skips. |
+
+O JAR original avaliado tem SHA256 `f68120a7ef9e853985575d91842cce1531903ca323134445ed13c85a9d1883b6`. O avaliador foi executado com `evaluation/run.ps1` no PowerShell 7.6.9 disponibilizado pelo runtime do Codex. O checkout do avaliador era `3ebbcd8` e estava limpo durante a execução.
+
+A branch local `experimento/codex-boot-3.5.16` parte de `1e8ea40`. O worktree em `C:/Users/vinic/mes-experimentos/mes-legacy-shop-codex-boot-3.5.16` contém os 22 arquivos modificados pelo agente, todos com base byte a byte igual à do pacote. O build emite aviso de depreciação para `AntPathRequestMatcher`.
+
+O [registro local da tentativa](../.experiment-local/records/codex-03-55119509/RESULTADO.md) reúne transcrição, logs, diff, árvore, JAR, relatórios, intervenções e contagem de tokens. As tentativas Codex 01 e 02 continuam registradas como bloqueios de infraestrutura. A revisão e os commits da branch experimental e deste status ficam com o autor.
