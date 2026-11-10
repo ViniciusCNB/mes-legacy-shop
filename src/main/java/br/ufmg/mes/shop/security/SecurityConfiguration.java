@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -22,25 +23,33 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, ApiSecurityHandlers errors) throws Exception {
+        // Spring Security 6 usa por padrao tokens CSRF mascarados (XOR) e carregamento adiado.
+        // O contrato exige que o token publicado em /api/csrf seja o mesmo valor do cookie XSRF-TOKEN
+        // e que o cookie seja emitido como na versao anterior, entao o tratamento simples e o
+        // carregamento imediato sao mantidos explicitamente.
+        CsrfTokenRequestAttributeHandler csrfRequestHandler = new CsrfTokenRequestAttributeHandler();
+        csrfRequestHandler.setCsrfRequestAttributeName(null);
         http
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .requestCache(cache -> cache.disable())
                 .formLogin(form -> form.disable())
                 .logout(logout -> logout.disable())
-                .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(new CookieCsrfTokenRepository())
+                        .csrfTokenRequestHandler(csrfRequestHandler))
                 .httpBasic(basic -> basic.authenticationEntryPoint(errors))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(errors).accessDeniedHandler(errors))
                 .authorizeHttpRequests(access -> access
-                        .antMatchers(HttpMethod.GET, "/actuator/health", "/api/products", "/api/products/*")
+                        .requestMatchers(HttpMethod.GET, "/actuator/health", "/api/products", "/api/products/*")
                         .permitAll()
-                        .antMatchers(HttpMethod.GET, "/api/me", "/api/csrf").authenticated()
-                        .antMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
-                        .antMatchers(HttpMethod.GET, "/api/orders").hasRole("CUSTOMER")
-                        .antMatchers(HttpMethod.GET, "/api/orders/*").hasAnyRole("CUSTOMER", "ADMIN")
-                        .antMatchers(HttpMethod.POST, "/api/orders/*/cancel").hasAnyRole("CUSTOMER", "ADMIN")
-                        .antMatchers("/api/admin/**").hasRole("ADMIN")
-                        .antMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/me", "/api/csrf").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/*").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/*/cancel").hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/error").permitAll()
                         .anyRequest().denyAll());
         return http.build();
     }

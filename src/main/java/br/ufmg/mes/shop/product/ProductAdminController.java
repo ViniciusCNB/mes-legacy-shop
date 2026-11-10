@@ -1,7 +1,7 @@
 package br.ufmg.mes.shop.product;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
