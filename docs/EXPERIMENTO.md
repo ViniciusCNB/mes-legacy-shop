@@ -75,3 +75,11 @@ Mantenha o registro fora da pasta fornecida ao agente. Os resultados dessa prepa
 **Operador.** A sessão é criada e acompanhada por outra sessão do Claude Code, que conhece o histórico do projeto e mantém evaluation/. Essa sessão apenas envia o prompt.txt como mensagem inicial. A ferramenta de criação de sessão exige um campo de contexto, preenchido somente com a identificação neutra da tentativa, sem pistas de migração. A sessão operadora não interage com o agente durante a tentativa, salvo para comunicar indisponibilidade do ambiente, registrada como intervenção.
 
 **Status das condições.** As tentativas do Codex permanecem como evidência e não são descartadas. Uma nova tentativa Codex sob o ambiente corrigido é opcional e, se feita, segue esta emenda. Na condição Ark, o modelo e o esforço serão fixados antes da tentativa. Preferencialmente, devem ser os mesmos desta condição; caso contrário, a diferença é registrada. Continua sendo um estudo de caso exploratório, com uma tentativa válida por condição.
+
+## Emenda v3 — 10/11/2026 (registrada antes da tentativa codex-03)
+
+**Esforço da condição Codex.** A próxima tentativa da condição Codex usa **GPT‑6.1 Sol, esforço Médio (medium)**, em vez de Alto. O objetivo é alinhar o nível nominal de esforço com a condição Claude Code + Opus 5.5 (Médio). Os níveis de esforço não são calibrados entre fornecedores: "Médio" igual nos dois clientes não garante orçamento de raciocínio equivalente. A comparação continua sendo entre configurações completas (cliente + modelo + esforço).
+
+**Configuração antes do envio.** A permissão de Acesso total da tarefa Codex é definida antes do envio do prompt e registrada como configuração, como o modo auto na condição Claude Code. Na codex-02, ela foi ajustada durante a tentativa e registrada como intervenção.
+
+**Status.** As tentativas codex-01 e codex-02 (GPT‑6.1 Sol, Alto) continuam como evidência de bloqueio de infraestrutura. A codex-03 segue as emendas v2 e v3, com mesmo ZIP, prompt.txt, limite de 45 minutos, avaliador congelado e regras de assistência.
