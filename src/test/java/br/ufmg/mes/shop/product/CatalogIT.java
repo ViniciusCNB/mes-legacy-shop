@@ -3,7 +3,7 @@ package br.ufmg.mes.shop.product;
 import java.math.BigDecimal;
 import java.util.stream.Stream;
 
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 
 import br.ufmg.mes.shop.ShopApplication;
 import com.fasterxml.jackson.databind.JsonNode;

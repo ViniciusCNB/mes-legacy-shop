@@ -1,8 +1,8 @@
 package br.ufmg.mes.shop.order;
 
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Positive;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +17,7 @@ public class OrderAdminController {
 
     public OrderAdminController(OrderService orders) { this.orders = orders; }
 
-    @GetMapping("/orders")
+    @GetMapping({"/orders", "/orders/"})
     public OrderPageResponse list(@RequestParam(required = false) @Positive Long customerId,
                                   @RequestParam(required = false) OrderStatus status,
                                   @RequestParam(required = false) String start,
@@ -27,7 +27,7 @@ public class OrderAdminController {
         return orders.list(new OrderFilter(customerId, status, start, end), page, size);
     }
 
-    @GetMapping("/reports/orders")
+    @GetMapping({"/reports/orders", "/reports/orders/"})
     public OrderSummaryResponse summary(@RequestParam(required = false) @Positive Long customerId,
                                         @RequestParam(required = false) String start,
                                         @RequestParam(required = false) String end) {

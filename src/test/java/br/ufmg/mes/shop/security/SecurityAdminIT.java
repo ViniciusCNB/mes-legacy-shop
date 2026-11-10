@@ -19,6 +19,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
@@ -171,9 +172,10 @@ class SecurityAdminIT {
                 Arguments.of("PATCH", "/api/admin/products/10/stock", STOCK));
     }
 
-    @Test
-    void createsUpdatesInactivatesAndSetsAbsoluteStockWithoutDeletingTheProduct() throws Exception {
-        HttpResponse<String> created = request("POST", "/api/admin/products", CREATE, csrf(ADMIN));
+    @ParameterizedTest
+    @ValueSource(strings = {"", "/"})
+    void createsUpdatesInactivatesAndSetsAbsoluteStockWithoutDeletingTheProduct(String suffix) throws Exception {
+        HttpResponse<String> created = request("POST", "/api/admin/products" + suffix, CREATE, csrf(ADMIN));
         assertThat(created.statusCode()).isEqualTo(201);
         JsonNode product = body(created);
         assertThat(product.size()).isEqualTo(6);
@@ -185,7 +187,9 @@ class SecurityAdminIT {
         assertThat(product.get("active").asBoolean()).isTrue();
         assertThat(request("GET", "/api/products/" + id, null, new HttpHeaders()).statusCode()).isEqualTo(200);
 
-        HttpResponse<String> updated = request("PUT", "/api/admin/products/" + id, UPDATE, csrf(ADMIN));
+        String productPath = "/api/admin/products/" + id;
+        String stockPath = productPath + "/stock" + suffix;
+        HttpResponse<String> updated = request("PUT", productPath + suffix, UPDATE, csrf(ADMIN));
         assertThat(updated.statusCode()).isEqualTo(200);
         assertThat(body(updated).get("active").asBoolean()).isFalse();
         assertThat(body(updated).get("sku").asText()).isEqualTo("ADMIN-NEW");
@@ -194,19 +198,19 @@ class SecurityAdminIT {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shop.products WHERE id = ?", Long.class, id))
                 .isEqualTo(1L);
 
-        HttpResponse<String> stock = request("PATCH", "/api/admin/products/" + id + "/stock", STOCK, csrf(ADMIN));
+        HttpResponse<String> stock = request("PATCH", stockPath, STOCK, csrf(ADMIN));
         assertThat(stock.statusCode()).isEqualTo(200);
         assertThat(body(stock).get("stockQuantity").asInt()).isEqualTo(7);
         assertThat(body(stock).get("price").decimalValue()).isEqualByComparingTo("20.50");
         assertThat(body(stock).get("active").asBoolean()).isFalse();
-        assertThat(body(request("PATCH", "/api/admin/products/" + id + "/stock", STOCK, csrf(ADMIN)))
+        assertThat(body(request("PATCH", stockPath, STOCK, csrf(ADMIN)))
                 .get("stockQuantity").asInt()).isEqualTo(7);
-        HttpResponse<String> zero = request("PATCH", "/api/admin/products/" + id + "/stock",
+        HttpResponse<String> zero = request("PATCH", stockPath,
                 "{\"stockQuantity\":0}", csrf(ADMIN));
         assertThat(zero.statusCode()).isEqualTo(200);
         assertThat(body(zero).get("stockQuantity").asInt()).isZero();
 
-        assertThat(request("PUT", "/api/admin/products/" + id, UPDATE.replace("false", "true"), csrf(ADMIN))
+        assertThat(request("PUT", productPath + suffix, UPDATE.replace("false", "true"), csrf(ADMIN))
                 .statusCode()).isEqualTo(200);
         JsonNode visible = body(request("GET", "/api/products/" + id, null, new HttpHeaders()));
         assertThat(visible.get("name").asText()).isEqualTo("Produto revisado");
@@ -283,12 +287,17 @@ class SecurityAdminIT {
             HttpResponse<String> token = request(browser, "GET", "/api/csrf", null, credentials(ADMIN, PASSWORD));
             assertThat(token.statusCode()).isEqualTo(200);
             HttpHeaders headers = credentials(ADMIN, PASSWORD);
-            headers.set(body(token).get("headerName").asText(), body(token).get("token").asText());
+            String csrfToken = body(token).get("token").asText();
+            headers.set(body(token).get("headerName").asText(), csrfToken);
             HttpResponse<String> response = request(browser, "PATCH", "/api/admin/products/10/stock",
                     "{\"stockQuantity\":" + stock + "}", headers);
             assertThat(response.statusCode()).isEqualTo(200);
             assertThat(body(response).get("stockQuantity").asInt()).isEqualTo(stock);
             assertThat(cookies.getCookieStore().getCookies()).noneMatch(cookie -> cookie.getName().equals("JSESSIONID"));
+            assertThat(cookies.getCookieStore().getCookies())
+                    .filteredOn(cookie -> cookie.getName().equals("XSRF-TOKEN"))
+                    .singleElement().satisfies(cookie -> assertThat(cookie.getValue()).isNotBlank()
+                            .isNotEqualTo(csrfToken));
         }
     }
     private HttpHeaders csrf(String email) throws Exception {

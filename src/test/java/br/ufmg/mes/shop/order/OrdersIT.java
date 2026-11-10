@@ -268,6 +268,7 @@ class OrdersIT {
         assertThat(summary.size()).isEqualTo(2);
         assertThat(summary.get("orderCount").asLong()).isEqualTo(2);
         assertThat(summary.get("total").decimalValue()).isEqualByComparingTo("79.70");
+        assertThat(body(get(ADMIN, "/api/admin/reports/orders/?" + period))).isEqualTo(summary);
         JsonNode own = body(get(ALICE, "/api/orders?size=2"));
         assertThat(own.size()).isEqualTo(5);
         assertThat(own.get("totalElements").asLong()).isEqualTo(3);
@@ -284,6 +285,7 @@ class OrdersIT {
         assertThat(filtered.get("totalElements").asLong()).isEqualTo(1);
         JsonNode cancelledPage = body(get(ADMIN, "/api/admin/orders?status=CANCELLED"));
         assertThat(cancelledPage.get("content").findValuesAsText("id")).containsExactly(Long.toString(cancelled));
+        assertThat(body(get(ADMIN, "/api/admin/orders/?status=CANCELLED"))).isEqualTo(cancelledPage);
         assertThat(body(get(ADMIN, "/api/admin/orders?customerId=999")).get("content")).isEmpty();
         JsonNode customerSummary = body(get(ADMIN, "/api/admin/reports/orders?" + period + "&customerId=2"));
         assertThat(customerSummary.get("orderCount").asLong()).isEqualTo(1);

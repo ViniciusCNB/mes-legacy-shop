@@ -1,7 +1,7 @@
 package br.ufmg.mes.shop.product;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Positive;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -25,20 +25,20 @@ public class ProductAdminController {
         this.products = products;
     }
 
-    @PostMapping
+    @PostMapping({"", "/"})
     @ResponseStatus(HttpStatus.CREATED)
     public AdminProductResponse create(@Valid @RequestBody CreateProductRequest request) {
         return products.create(request);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping({"/{id}", "/{id}/"})
     public AdminProductResponse update(
             @PathVariable("id") @Positive(message = "deve ser positivo") Long id,
             @Valid @RequestBody UpdateProductRequest request) {
         return products.update(id, request);
     }
 
-    @PatchMapping("/{id}/stock")
+    @PatchMapping({"/{id}/stock", "/{id}/stock/"})
     public AdminProductResponse setStock(
             @PathVariable("id") @Positive(message = "deve ser positivo") Long id,
             @Valid @RequestBody StockUpdateRequest request) {

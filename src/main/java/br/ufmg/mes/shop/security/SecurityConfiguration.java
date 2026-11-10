@@ -10,6 +10,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -22,25 +25,37 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http, ApiSecurityHandlers errors) throws Exception {
+        // Keep the CSRF response token equal to the cookie value and issue the cookie eagerly.
+        CsrfTokenRequestAttributeHandler csrfTokens = new CsrfTokenRequestAttributeHandler();
+        csrfTokens.setCsrfRequestAttributeName(null);
+
         http
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        // Run the CSRF token rotation strategy after successful Basic authentication.
+                        .requireExplicitAuthenticationStrategy(false))
                 .requestCache(cache -> cache.disable())
                 .formLogin(form -> form.disable())
                 .logout(logout -> logout.disable())
-                .csrf(csrf -> csrf.csrfTokenRepository(new CookieCsrfTokenRepository()))
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(new CookieCsrfTokenRepository())
+                        .csrfTokenRequestHandler(csrfTokens))
                 .httpBasic(basic -> basic.authenticationEntryPoint(errors))
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(errors).accessDeniedHandler(errors))
+                // Keep authorization independent of MVC path matching, as in Spring Security 5.
                 .authorizeHttpRequests(access -> access
-                        .antMatchers(HttpMethod.GET, "/actuator/health", "/api/products", "/api/products/*")
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/actuator/health"),
+                                antMatcher(HttpMethod.GET, "/api/products"), antMatcher(HttpMethod.GET, "/api/products/*"))
                         .permitAll()
-                        .antMatchers(HttpMethod.GET, "/api/me", "/api/csrf").authenticated()
-                        .antMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
-                        .antMatchers(HttpMethod.GET, "/api/orders").hasRole("CUSTOMER")
-                        .antMatchers(HttpMethod.GET, "/api/orders/*").hasAnyRole("CUSTOMER", "ADMIN")
-                        .antMatchers(HttpMethod.POST, "/api/orders/*/cancel").hasAnyRole("CUSTOMER", "ADMIN")
-                        .antMatchers("/api/admin/**").hasRole("ADMIN")
-                        .antMatchers("/error").permitAll()
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/me"),
+                                antMatcher(HttpMethod.GET, "/api/csrf")).authenticated()
+                        .requestMatchers(antMatcher(HttpMethod.POST, "/api/orders"),
+                                antMatcher(HttpMethod.GET, "/api/orders")).hasRole("CUSTOMER")
+                        .requestMatchers(antMatcher(HttpMethod.GET, "/api/orders/*"),
+                                antMatcher(HttpMethod.POST, "/api/orders/*/cancel")).hasAnyRole("CUSTOMER", "ADMIN")
+                        .requestMatchers(antMatcher("/api/admin/**")).hasRole("ADMIN")
+                        .requestMatchers(antMatcher("/error")).permitAll()
                         .anyRequest().denyAll());
         return http.build();
     }
