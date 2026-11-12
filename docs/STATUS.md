@@ -1,5 +1,18 @@
 # Status
 
+## Reconstrução da origem em Java 8 / Boot 2.1 — R1 a R5 (11/11/2026)
+
+Branch `reconstrucao/boot-2.1`; tag `piloto-boot-2.7` em 1e8ea40. Nada commitado pelo assistente.
+
+| Verificação | Resultado |
+| --- | --- |
+| `mvnw -B -ntp -V clean verify` com Temurin 1.8.0_512 e Maven 3.9.11 | BUILD SUCCESS; 123 testes, 0 falhas, erros ou skips (FoundationIT 1, CatalogIT 32, SecurityAdminIT 41, OrdersIT 49). Manifesto: Spring-Boot-Version 2.1.18.RELEASE, Build-Jdk-Spec 1.8. |
+| Inventário da suíte (`tools/TestInventory.java`) contra o piloto | Idêntico: 39 métodos, 123 casos executados, 230 pontos de asserção, nenhum skip, mesma distribuição por método. |
+| Avaliador externo 1.0.0 (`bash evaluation/run.sh`, JDK 17 conforme o roteiro) | 26/26, BUILD SUCCESS. JAR SHA256 0d58a11d0efff176835f4e97c2d71de96883f6fa26c31b33f78005f63087676f. |
+| Roteiro de sondagem com a aplicação em JDK 8 | 31 sondagens idênticas às da baseline 2.7.18 do piloto, inclusive barra final (7 rotas com 200) e renovação do CSRF. |
+
+Pendências: tabela de caracterização e varredura de marcadores legados (R6); especificação, snapshot do avaliador com JDK separado para a aplicação, protocolo v2 e prompt (R7). AGENTS.md e README.md já descrevem a nova stack.
+
 ## Levantamento do legado — 11/11/2026
 
 - **Direção:** o Ark fica fora por enquanto; a migração segue com Codex e Claude Code. A origem precisa ser revista (versão de Java e de Spring Boot, com justificativa), com uma única combinação de origem e destino, caracterização visível das características legadas e evidência de que a migração modernizou o código e os testes.

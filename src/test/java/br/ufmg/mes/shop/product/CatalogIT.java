@@ -1,53 +1,62 @@
 package br.ufmg.mes.shop.product;
 
 import java.math.BigDecimal;
-import java.util.stream.Stream;
+import java.util.Collections;
 
 import javax.validation.ConstraintViolationException;
 
 import br.ufmg.mes.shop.ShopApplication;
 import com.fasterxml.jackson.databind.JsonNode;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
 import org.hibernate.tool.schema.spi.SchemaManagementException;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.ClassRule;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
+import org.springframework.boot.test.context.ConfigFileApplicationContextInitializer;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.junit4.rules.SpringClassRule;
+import org.springframework.test.context.junit4.rules.SpringMethodRule;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import br.ufmg.mes.shop.support.PostgresTestDatabase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@Testcontainers
+@RunWith(JUnitParamsRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ContextConfiguration(initializers = CatalogIT.Initializer.class)
 @Sql("/db/catalog-fixture.sql")
-class CatalogIT {
+public class CatalogIT {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES = PostgresTestDatabase.create("catalog_test");
+    @ClassRule
+    public static final PostgreSQLContainer<?> POSTGRES = PostgresTestDatabase.create("catalog_test");
 
-    @DynamicPropertySource
-    static void databaseProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
+    @ClassRule
+    public static final SpringClassRule SPRING_CLASS_RULE = new SpringClassRule();
+
+    @Rule
+    public final SpringMethodRule springMethodRule = new SpringMethodRule();
+
+    public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext context) {
+            PostgresTestDatabase.applyTo(POSTGRES, context);
+        }
     }
 
     @Autowired
@@ -60,7 +69,7 @@ class CatalogIT {
     private JdbcTemplate jdbc;
 
     @Test
-    void listsOnlyActiveProductsInStableOrderWithDefaultPagination() {
+    public void listsOnlyActiveProductsInStableOrderWithDefaultPagination() {
         JsonNode page = get("/api/products");
         assertThat(page.size()).isEqualTo(5);
         assertThat(page.get("page").asInt()).isZero();
@@ -72,7 +81,7 @@ class CatalogIT {
     }
 
     @Test
-    void paginatesWithoutCountingInactiveProductsAndPreservesTotalsBeyondLastPage() {
+    public void paginatesWithoutCountingInactiveProductsAndPreservesTotalsBeyondLastPage() {
         JsonNode first = get("/api/products?page=0&size=2");
         JsonNode second = get("/api/products?page=1&size=2");
         JsonNode beyond = get("/api/products?page=2&size=2");
@@ -89,7 +98,7 @@ class CatalogIT {
     }
 
     @Test
-    void returnsAnEmptyPageWhenThereAreNoActiveProducts() {
+    public void returnsAnEmptyPageWhenThereAreNoActiveProducts() {
         jdbc.update("UPDATE shop.products SET active = false");
         JsonNode page = get("/api/products");
         assertThat(page.get("content")).isEmpty();
@@ -98,7 +107,7 @@ class CatalogIT {
     }
 
     @Test
-    void returnsOnlyThePublicProductFields() {
+    public void returnsOnlyThePublicProductFields() {
         JsonNode product = get("/api/products/10");
         assertThat(product.size()).isEqualTo(5);
         assertThat(product.get("id").asLong()).isEqualTo(10);
@@ -108,9 +117,9 @@ class CatalogIT {
         assertThat(product.get("stockQuantity").asInt()).isEqualTo(12);
     }
 
-    @ParameterizedTest
-    @ValueSource(longs = {20, 999})
-    void doesNotDistinguishInactiveFromMissingProducts(long id) {
+    @Test
+    @Parameters({"20", "999"})
+    public void doesNotDistinguishInactiveFromMissingProducts(long id) {
         ResponseEntity<JsonNode> response = http.getForEntity("/api/products/" + id, JsonNode.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
         assertThat(response.getBody().size()).isEqualTo(2);
@@ -118,8 +127,8 @@ class CatalogIT {
         assertThat(response.getBody().get("message").asText()).isEqualTo("Produto não encontrado");
     }
 
-    @ParameterizedTest
-    @CsvSource({
+    @Test
+    @Parameters({
             "/api/products?page=-1, page",
             "/api/products?page=1000001, page",
             "/api/products?size=0, size",
@@ -131,7 +140,7 @@ class CatalogIT {
             "/api/products/abc, id",
             "/api/products/9223372036854775808, id"
     })
-    void rejectsInvalidParametersWithTheDocumentedError(String path, String field) {
+    public void rejectsInvalidParametersWithTheDocumentedError(String path, String field) {
         ResponseEntity<JsonNode> response = http.getForEntity(path, JsonNode.class);
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         JsonNode error = response.getBody();
@@ -144,47 +153,45 @@ class CatalogIT {
     }
 
     @Test
-    void persistsMoneyExactlyAndGeneratesAnId() {
+    public void persistsMoneyExactlyAndGeneratesAnId() {
         BigDecimal price = new BigDecimal("12345678901234567.89");
         Product saved = products.saveAndFlush(new Product("PRECISE-PRICE", "Valor exato", price, 2, true));
-        Product reloaded = products.findById(saved.getId()).orElseThrow();
+        Product reloaded = products.findById(saved.getId()).get();
         assertThat(saved.getId()).isGreaterThan(0L);
         assertThat(reloaded.getPrice()).isEqualTo(price);
         assertThat(reloaded.getPrice().scale()).isEqualTo(2);
         assertThat(get("/api/products/" + saved.getId()).get("sku").asText()).isEqualTo("PRECISE-PRICE");
     }
 
-    @ParameterizedTest
-    @MethodSource("invalidProducts")
-    void validatesProductsBeforePersisting(Product product) {
+    @Test
+    @Parameters(method = "invalidProducts")
+    public void validatesProductsBeforePersisting(final Product product) {
         assertThatThrownBy(() -> products.saveAndFlush(product))
                 .isInstanceOf(ConstraintViolationException.class);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shop.products", Long.class)).isEqualTo(4L);
     }
 
-    static Stream<Product> invalidProducts() {
-        return Stream.of(
-                new Product("", "Produto", BigDecimal.ONE, 0, true),
-                new Product("\t", "Produto", BigDecimal.ONE, 0, true),
-                new Product("X".repeat(65), "Produto", BigDecimal.ONE, 0, true),
-                new Product("INVALID", " ", BigDecimal.ONE, 0, true),
-                new Product("INVALID", "Produto", null, 0, true),
-                new Product("INVALID", "Produto", BigDecimal.ZERO, 0, true),
-                new Product("INVALID", "Produto", new BigDecimal("1.001"), 0, true),
-                new Product("INVALID", "Produto", new BigDecimal("100000000000000000.00"), 0, true),
-                new Product("INVALID", "Produto", BigDecimal.ONE, -1, true));
+    @SuppressWarnings("unused")
+    private Object[] invalidProducts() {
+        return new Object[] {
+                new Object[] {new Product("", "Produto", BigDecimal.ONE, 0, true)},
+                new Object[] {new Product("\t", "Produto", BigDecimal.ONE, 0, true)},
+                new Object[] {new Product(String.join("", Collections.nCopies(65, "X")), "Produto",
+                        BigDecimal.ONE, 0, true)},
+                new Object[] {new Product("INVALID", " ", BigDecimal.ONE, 0, true)},
+                new Object[] {new Product("INVALID", "Produto", null, 0, true)},
+                new Object[] {new Product("INVALID", "Produto", BigDecimal.ZERO, 0, true)},
+                new Object[] {new Product("INVALID", "Produto", new BigDecimal("1.001"), 0, true)},
+                new Object[] {new Product("INVALID", "Produto", new BigDecimal("100000000000000000.00"), 0, true)},
+                new Object[] {new Product("INVALID", "Produto", BigDecimal.ONE, -1, true)}
+        };
     }
 
-    @ParameterizedTest
-    @CsvSource({
-            "NEW-SKU, Produto, 0.00, 1, products_price_positive",
-            "NEW-SKU, Produto, 1.00, -1, products_stock_nonnegative",
-            "CATALOG-10, Produto, 1.00, 1, products_sku_unique",
-            "'\t', Produto, 1.00, 1, products_sku_not_blank",
-            "NEW-SKU, '   ', 1.00, 1, products_name_not_blank"
-    })
-    void enforcesDatabaseConstraintsEvenWhenBypassingJpa(String sku, String name, BigDecimal price,
-                                                       int stock, String constraint) {
+    @Test
+    @Parameters(method = "constraintViolations")
+    public void enforcesDatabaseConstraintsEvenWhenBypassingJpa(final String sku, final String name,
+                                                               final BigDecimal price, final int stock,
+                                                               String constraint) {
         assertThatThrownBy(() -> jdbc.update(
                 "INSERT INTO shop.products (sku, name, price, stock_quantity, active) VALUES (?, ?, ?, ?, ?)",
                 sku, name, price, stock, true))
@@ -193,8 +200,19 @@ class CatalogIT {
         assertThat(jdbc.queryForObject("SELECT count(*) FROM shop.products", Long.class)).isEqualTo(4L);
     }
 
+    @SuppressWarnings("unused")
+    private Object[] constraintViolations() {
+        return new Object[] {
+                new Object[] {"NEW-SKU", "Produto", new BigDecimal("0.00"), 1, "products_price_positive"},
+                new Object[] {"NEW-SKU", "Produto", new BigDecimal("1.00"), -1, "products_stock_nonnegative"},
+                new Object[] {"CATALOG-10", "Produto", new BigDecimal("1.00"), 1, "products_sku_unique"},
+                new Object[] {"\t", "Produto", new BigDecimal("1.00"), 1, "products_sku_not_blank"},
+                new Object[] {"NEW-SKU", "   ", new BigDecimal("1.00"), 1, "products_name_not_blank"}
+        };
+    }
+
     @Test
-    void refusesToStartWithAColumnMissingFromTheMappedSchema() {
+    public void refusesToStartWithAColumnMissingFromTheMappedSchema() {
         jdbc.execute("CREATE SCHEMA validation_probe");
         jdbc.execute("CREATE TABLE validation_probe.products (id BIGINT PRIMARY KEY)");
         jdbc.execute("CREATE TABLE validation_probe.app_users (LIKE shop.app_users INCLUDING ALL)");
@@ -202,7 +220,7 @@ class CatalogIT {
         jdbc.execute("CREATE TABLE validation_probe.order_items (LIKE shop.order_items INCLUDING ALL)");
         try {
             new WebApplicationContextRunner()
-                    .withInitializer(new ConfigDataApplicationContextInitializer())
+                    .withInitializer(new ConfigFileApplicationContextInitializer())
                     .withUserConfiguration(ShopApplication.class)
                     .withPropertyValues(
                             "spring.profiles.active=test",

@@ -1,5 +1,6 @@
 package br.ufmg.mes.shop.api;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,26 +26,26 @@ public class ApiExceptionHandler {
     @ExceptionHandler(OrderNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError orderNotFound(OrderNotFoundException exception) {
-        return new ApiError("ORDER_NOT_FOUND", exception.getMessage(), List.of());
+        return new ApiError("ORDER_NOT_FOUND", exception.getMessage(), Collections.<ApiError.FieldError>emptyList());
     }
 
     @ExceptionHandler(OrderConflictException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError orderConflict(OrderConflictException exception) {
-        return new ApiError(exception.getCode(), exception.getMessage(), List.of());
+        return new ApiError(exception.getCode(), exception.getMessage(), Collections.<ApiError.FieldError>emptyList());
     }
 
     @ExceptionHandler(InvalidOrderRequestException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError invalidOrder(InvalidOrderRequestException exception) {
         return new ApiError("INVALID_REQUEST", "Parâmetros inválidos",
-                List.of(new ApiError.FieldError(exception.getField(), exception.getMessage())));
+                Collections.singletonList(new ApiError.FieldError(exception.getField(), exception.getMessage())));
     }
 
     @ExceptionHandler(ProductNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError productNotFound(ProductNotFoundException exception) {
-        return new ApiError("PRODUCT_NOT_FOUND", exception.getMessage(), List.of());
+        return new ApiError("PRODUCT_NOT_FOUND", exception.getMessage(), Collections.<ApiError.FieldError>emptyList());
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
@@ -65,13 +66,13 @@ public class ApiExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError invalidType(MethodArgumentTypeMismatchException exception) {
         return new ApiError("INVALID_REQUEST", "Parâmetros inválidos",
-                List.of(new ApiError.FieldError(exception.getName(), "valor inválido para o parâmetro")));
+                Collections.singletonList(new ApiError.FieldError(exception.getName(), "valor inválido para o parâmetro")));
     }
 
     @ExceptionHandler(SkuAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError skuConflict(SkuAlreadyExistsException exception) {
-        return new ApiError("SKU_ALREADY_EXISTS", exception.getMessage(), List.of());
+        return new ApiError("SKU_ALREADY_EXISTS", exception.getMessage(), Collections.<ApiError.FieldError>emptyList());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -87,6 +88,6 @@ public class ApiExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError invalidJson() {
-        return new ApiError("INVALID_REQUEST", "JSON inválido", List.of());
+        return new ApiError("INVALID_REQUEST", "JSON inválido", Collections.<ApiError.FieldError>emptyList());
     }
 }

@@ -1,36 +1,43 @@
 package br.ufmg.mes.shop;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
+
 import javax.sql.DataSource;
 
-import org.junit.jupiter.api.Test;
+import org.junit.ClassRule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import br.ufmg.mes.shop.support.PostgresTestDatabase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Testcontainers
+@RunWith(SpringRunner.class)
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-class FoundationIT {
+@ContextConfiguration(initializers = FoundationIT.Initializer.class)
+public class FoundationIT {
 
-    @Container
-    static final PostgreSQLContainer<?> POSTGRES = PostgresTestDatabase.create("foundation_test");
+    @ClassRule
+    public static final PostgreSQLContainer<?> POSTGRES = PostgresTestDatabase.create("foundation_test");
 
-    @DynamicPropertySource
-    static void databaseProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
-        registry.add("spring.datasource.username", POSTGRES::getUsername);
-        registry.add("spring.datasource.password", POSTGRES::getPassword);
+    public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext context) {
+            PostgresTestDatabase.applyTo(POSTGRES, context);
+        }
     }
 
     @Autowired
@@ -40,10 +47,10 @@ class FoundationIT {
     private TestRestTemplate http;
 
     @Test
-    void startsWithPostgres16AndExposesOnlyHealthStatus() throws Exception {
-        try (var connection = dataSource.getConnection();
-             var statement = connection.createStatement();
-             var result = statement.executeQuery(
+    public void startsWithPostgres16AndExposesOnlyHealthStatus() throws Exception {
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery(
                      "SELECT current_schema(), current_setting('server_version_num')::integer")) {
             assertThat(result.next()).isTrue();
             assertThat(result.getString(1)).isEqualTo("shop");

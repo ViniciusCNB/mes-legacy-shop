@@ -4,10 +4,10 @@ Objeto de estudo do TP de MES. As Fases 1 a 4 fornecem a fundação local, catá
 
 ## Versões e pré-requisitos
 
-- JDK **17**, sem preview, com JAVA_HOME apontando para o JDK. O Enforcer rejeita outras linhas do Java.
+- JDK **8** (verificado com Temurin 1.8.0_512), com JAVA_HOME apontando para o JDK. O Enforcer rejeita outras linhas do Java.
 - Maven **3.9.11** pelo Wrapper oficial **3.3.2**, tipo only-script, sem Maven global. O download tem SHA256 fixado. Primeira execução requer rede e PowerShell no Windows ou curl/wget e sha256sum/shasum no Linux.
-- Spring Boot **2.7.18** e Spring Security **5.7.11**, gerenciado pelo Boot. Hibernate **5.6.15.Final**, JDBC PostgreSQL **42.3.8** e JUnit Jupiter **5.8.2**, gerenciados pelo Boot.
-- Docker com contêineres Linux e Docker Compose v2 com suporte a `up --wait` (verificado com 2.32.4). Testes usam Testcontainers **1.19.8** e Docker acessível pela JVM.
+- Spring Boot **2.1.18.RELEASE**, com Spring **5.1.19**, Spring Security **5.1.13**, Hibernate **5.3.18.Final**, JDBC PostgreSQL **42.2.18**, JUnit **4.12** e Apache HttpClient **4.5.13**, gerenciados pelo Boot. JUnitParams **1.1.1** fixado no POM para testes parametrizados em JUnit 4.
+- Docker com contêineres Linux e Docker Compose v2 com suporte a `up --wait` (verificado com 2.32.4). Testes usam Testcontainers **1.21.4** (BOM fixado no POM; versões da época não são garantidas com o Docker atual) e Docker acessível pela JVM.
 - PostgreSQL **16.10**, imagem `postgres:16.10-bookworm`, fixada também por digest `sha256:38471f330eb885e04de130b768d6db4e10469e2311879c7e5c699f6d2d8a1c74`. Compose e teste usam o mesmo conteúdo.
 - JaCoCo **0.8.11**; relatório sem meta percentual arbitrária.
 
@@ -19,7 +19,7 @@ PowerShell, somente se ainda não houver .env:
 
 ```powershell
 if (!(Test-Path .env)) { Copy-Item .env.example .env }
-$env:JAVA_HOME = 'C:\caminho\para\jdk-17'
+$env:JAVA_HOME = 'C:\caminho\para\jdk-8'
 $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 java -version
 .\mvnw.cmd -v
@@ -32,7 +32,7 @@ Linux:
 
 ```sh
 test -f .env || cp .env.example .env
-export JAVA_HOME=/caminho/para/jdk-17
+export JAVA_HOME=/caminho/para/jdk-8
 export PATH="$JAVA_HOME/bin:$PATH"
 java -version
 sh ./mvnw -v
@@ -61,7 +61,7 @@ Linux:
 sh ./mvnw -B -ntp clean verify
 ```
 
-`verify` compila, empacota o JAR executável, roda FoundationIT, CatalogIT, SecurityAdminIT e OrdersIT pelo Failsafe e gera `target/site/jacoco/index.html` e jacoco.csv. Cada classe de integração cria PostgreSQL real em contêiner descartável/porta aleatória, com banco e credenciais exclusivos, aplica os mesmos SQLs V001/V002/V003/V004 e inicia a aplicação. A suíte preserva as verificações de saúde e cobre catálogo, paginação, ativos/inativos, erros, persistência decimal, Bean Validation, restrições SQL e rejeição de esquema divergente. A suíte de segurança usa Basic, BCrypt e CSRF reais e cliente HTTP do Java 17, incluindo PATCH, sem mocks de autenticação. OrdersIT verifica cálculos, rollback multitem, preço histórico, isolamento, cancelamento e concorrência HTTP, filtros/resumo e restrições reais. Não lê o banco de demonstração nem exige Compose previamente iniciado. A primeira execução também baixa imagens auxiliares fixadas pelo Testcontainers, como testcontainers/ryuk:0.7.0.
+`verify` compila, empacota o JAR executável, roda FoundationIT, CatalogIT, SecurityAdminIT e OrdersIT pelo Failsafe e gera `target/site/jacoco/index.html` e jacoco.csv. Cada classe de integração cria PostgreSQL real em contêiner descartável/porta aleatória, com banco e credenciais exclusivos, aplica os mesmos SQLs V001/V002/V003/V004 e inicia a aplicação. A suíte preserva as verificações de saúde e cobre catálogo, paginação, ativos/inativos, erros, persistência decimal, Bean Validation, restrições SQL e rejeição de esquema divergente. A suíte usa JUnit 4 (`SpringRunner`, ou `JUnitParamsRunner` com `SpringClassRule`/`SpringMethodRule` nas classes parametrizadas). A suíte de segurança usa Basic, BCrypt e CSRF reais e Apache HttpClient 4, incluindo PATCH, sem mocks de autenticação. OrdersIT verifica cálculos, rollback multitem, preço histórico, isolamento, cancelamento e concorrência HTTP, filtros/resumo e restrições reais. Não lê o banco de demonstração nem exige Compose previamente iniciado. A primeira execução também baixa imagens auxiliares fixadas pelo Testcontainers, como testcontainers/ryuk:0.7.0.
 
 `test`/`package` isoladamente não executam a integração; use **verify** como verificação principal. Docker indisponível deve fazer o teste falhar, sem skip automático, H2 ou substituição por mocks. Resultados ficam em target/failsafe-reports. O nível de log do teste é INFO, mantendo erros e stack traces completos.
 

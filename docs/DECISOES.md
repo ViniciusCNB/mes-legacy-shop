@@ -160,3 +160,19 @@ Cada item admitido entra numa tabela com: característica, classes, fonte que do
 ### P3 — Nova redação da regra do AGENTS.md
 
 A regra "Não adicione falhas deliberadas, pistas ou soluções de migração" foi reescrita no AGENTS.md para aplicar o critério P1 sem permitir defeitos ou pistas. A redação anterior fica registrada aqui para referência.
+
+## Reconstrução da origem — R2 a R5 (11/11/2026)
+
+Escolhas de implementação da reconstrução sob D1 e P1. Contrato, esquema SQL, dados e avaliador externo não mudaram.
+
+| Escolha | Justificativa |
+| --- | --- |
+| POM em Boot 2.1.18.RELEASE e Java 8 | Enforcer `[1.8,1.9)`. Versões gerenciadas pelo Boot, exceto Testcontainers 1.21.4 (BOM) e JUnitParams 1.1.1. |
+| JUnitParams 1.1.1 | Biblioteca usual em 2017–2018 para parametrizar testes JUnit 4 sem separar classes; combina com `SpringClassRule` e `SpringMethodRule`. Mantém a correspondência 1:1 com os 16 métodos parametrizados do piloto. Valores com vírgulas, espaços ou tabulações usam provedores por método, para não depender do analisador CSV da biblioteca. |
+| Apache HttpClient 4.5.13 nos testes | Cliente gerenciado pelo Boot 2.1, com PATCH, cabeçalhos explícitos e `BasicCookieStore` para o teste com cookie jar real. Substitui o `java.net.http` do Java 11, indisponível no Java 8. |
+| `WebSecurityConfigurerAdapter` | Forma documentada do Spring Security 5.1, com `authorizeRequests().antMatchers()...and()`, `@EnableWebSecurity` sem `@Configuration` e `configure(AuthenticationManagerBuilder)`. Mesma política de acesso, Basic, CSRF por cookie e tratamento de erros. |
+| `.env` por `@PropertySource` no perfil `local` | `spring.config.import` só existe a partir do Boot 2.4. `LocalEnvironmentConfiguration` lê `./.env` como propriedades, ignorando ausência; variáveis de ambiente continuam com precedência. |
+| Propriedades da linha 2.1 | `spring.datasource.initialization-mode` no lugar de `spring.sql.init.mode`; sem `show-components` (inexistente em 2.1); dialeto `PostgreSQL95Dialect` declarado; `hibernate.jdbc.lob.non_contextual_creation=true`, configuração usual do PostgreSQL com Hibernate 5. |
+| Java 8 no código | `Collections.emptyList()`/`singletonList`, `Arrays.asList`, `String.join` com `Collections.nCopies`, tipos explícitos no lugar de `var` e `Optional.get()` onde o teste exige presença. |
+| Avaliador com a aplicação em JDK 17 | `evaluation/run.sh` exige JDK 17 e usa o mesmo `JAVA_HOME` para o JAR. Sem alterar o snapshot, a execução em Java 8 foi conferida pelo roteiro de sondagem. A separação entre o JDK do avaliador e o da aplicação fica para o R7. |
+| `tools/TestInventory.java` | Inventário por método: casos executados (relatórios Failsafe), casos ignorados, pontos de asserção textuais e marcadores de skip. Serve para comparar duas versões da mesma suíte. |

@@ -2,7 +2,7 @@ package br.ufmg.mes.shop.security;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.Collections;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -49,6 +49,6 @@ public class ApiSecurityHandlers implements AuthenticationEntryPoint, AccessDeni
         response.setStatus(status);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        json.writeValue(response.getOutputStream(), new ApiError(code, message, List.of()));
+        json.writeValue(response.getOutputStream(), new ApiError(code, message, Collections.<ApiError.FieldError>emptyList()));
     }
 }

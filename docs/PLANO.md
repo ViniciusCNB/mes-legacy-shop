@@ -37,13 +37,13 @@ Plano para revisão do autor; nenhuma etapa foi iniciada. Base: decisão D1 e cr
 
 ### Testes como parte da migração
 
-A suíte atual tem 43 métodos de teste, 16 deles parametrizados, que geram 123 casos em JUnit 5. Na nova origem, a suíte é reescrita no idioma de 2018, caso a caso, sem reduzir cenários ou assertions. Assim, migrar os testes passa a ser uma parte real do trabalho do agente:
+A suíte do piloto tem 39 métodos de teste, 16 deles parametrizados, que geram 123 casos em JUnit 5. Na nova origem, a suíte é reescrita no idioma de 2018, caso a caso, sem reduzir cenários ou assertions. Assim, migrar os testes passa a ser uma parte real do trabalho do agente:
 
 | Idioma da origem (JUnit 4 / Boot 2.1) | O que a migração para Boot 3.5 exige |
 | --- | --- |
 | `@RunWith(SpringRunner.class)`, `@Before`, `@BeforeClass`, `org.junit.Test` | JUnit 5 (`@BeforeEach`, `@BeforeAll`, `org.junit.jupiter`); o starter de testes do Boot 3 não traz o motor do JUnit 4 |
-| Casos parametrizados com `@RunWith(Parameterized.class)` mais `SpringClassRule` e `SpringMethodRule` | `@ParameterizedTest` com `@MethodSource` ou `@CsvSource` |
-| `@Test(expected = ...)` e a regra `ExpectedException` | `assertThrows` |
+| Casos parametrizados com JUnitParams (`@RunWith(JUnitParamsRunner.class)`, `@Parameters`) mais `SpringClassRule` e `SpringMethodRule` | `@ParameterizedTest` com `@MethodSource`, `@CsvSource` ou `@ValueSource` |
+| `ConfigFileApplicationContextInitializer` no `WebApplicationContextRunner` | Removido no Boot 3; substituído por `ConfigDataApplicationContextInitializer` |
 | Contêiner do Testcontainers como `@ClassRule` | `@Testcontainers` e `@Container` |
 | Propriedades do banco via `ApplicationContextInitializer` e `TestPropertyValues` | `@DynamicPropertySource` (ou `@ServiceConnection`) |
 | `org.springframework.boot.web.server.LocalServerPort` | Pacote movido para `org.springframework.boot.test.web.server` |
