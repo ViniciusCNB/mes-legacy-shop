@@ -1,5 +1,12 @@
 # Status
 
+## Caracterização da origem — R6 (11/11/2026)
+
+- Tabela em [CARACTERIZACAO_ORIGEM.md](CARACTERIZACAO_ORIGEM.md): 19 características legadas (15 de quebra, 4 de obsolescência), com local, efeito no Boot 3.5, verificação nos JARs do Boot 3.5.16 e teste que detecta migração errada.
+- Nova ferramenta `tools/LegacyScan.java`. Origem 2.1: 19 tipos de marcador, 189 ocorrências. Piloto 2.7: 3 tipos, 96 ocorrências. Destinos do piloto (claude-01 e codex-03): 0.
+- Métricas (`tools/SourceMetrics.java`): produção 43 arquivos / 1.591 linhas físicas (piloto 42 / 1.565); testes internos 6 / 1.303 (piloto 5 / 1.126).
+- As referências bibliográficas da tabela ainda precisam ser conferidas pelo autor. O pacote de migração não inclui `tools/` nem os documentos de caracterização (lista fechada em `experiments/New-MigrationInput.ps1`).
+
 ## Reconstrução da origem em Java 8 / Boot 2.1 — R1 a R5 (11/11/2026)
 
 Branch `reconstrucao/boot-2.1`; tag `piloto-boot-2.7` em 1e8ea40. Nada commitado pelo assistente.
