@@ -1,6 +1,6 @@
 # Decisões
 
-Data: 15/10/2026. Decisões rotineiras executadas pelo Codex dentro da autorização do autor por fase; revisão humana das novas alterações pendente. A tabela inicial preserva o histórico da Fase 1, commitada pelo autor em 502c36c. Não atribuir essas escolhas individualmente ao professor. O contexto relata a orientação acadêmica e distingue as propostas.
+Data: 15/10/2026. Decisões rotineiras executadas pelo Codex dentro da autorização do autor por fase; revisão humana das novas alterações pendente. A tabela inicial preserva o histórico da Fase 1, commitada pelo autor em 502c36c.
 
 | Escolha | Estado e justificativa |
 | --- | --- |
@@ -32,7 +32,7 @@ Estratégia de concorrência, DTOs/paginação de pedidos e filtros foram defini
 
 ## Fase 2 — Catálogo
 
-Autorizada pelo autor após o commit 502c36c da Fundação. Detalhes abaixo são escolhas de implementação, não novas orientações acadêmicas atribuídas ao professor.
+Autorizada pelo autor após o commit 502c36c da Fundação. Detalhes abaixo são escolhas de implementação.
 
 | Escolha | Justificativa e estado |
 | --- | --- |
@@ -51,7 +51,7 @@ Resultados, incidentes do ambiente e limitações estão em STATUS.md. A seção
 
 ## Fase 3 — Segurança e administração
 
-Autorizada pelo autor após f452ab5. São decisões de implementação dentro desse escopo; não são novas exigências atribuídas ao professor. Resultados reais, falhas e revisão humana estão em STATUS.md.
+Autorizada pelo autor após f452ab5. São decisões de implementação dentro desse escopo. Resultados reais, falhas e revisão humana estão em STATUS.md.
 
 | Escolha | Justificativa |
 | --- | --- |
@@ -77,7 +77,7 @@ O marco acima registra a Fase 3; pedidos foram autorizados e implementados na Fa
 
 ## Fase 4 — Pedidos
 
-Autorizada pelo autor após 6778cd2. Decisões de implementação, sem atribuição ao professor. POM, stack e versões preservados, sem novas dependências.
+Autorizada pelo autor após 6778cd2. Decisões de implementação. POM, stack e versões preservados, sem novas dependências.
 
 | Escolha | Justificativa |
 | --- | --- |
@@ -97,7 +97,7 @@ Instantes são truncados a microssegundos antes da gravação, correspondendo à
 
 ## Fase 5 — Consolidação
 
-Autorizada pelo autor após 4979132. O código/SQL/testes internos da aplicação e POM/Compose local permanecem inalterados. São escolhas de implementação, não novos acordos atribuídos ao professor.
+Autorizada pelo autor após 4979132. O código/SQL/testes internos da aplicação e POM/Compose local permanecem inalterados. São escolhas de implementação.
 
 | Escolha | Justificativa |
 | --- | --- |
@@ -116,3 +116,47 @@ Autorizada pelo autor após 4979132. O código/SQL/testes internos da aplicaçã
 Compatibilidade verificada com JDK 17/Maven 3.9.11 e execuções reais; resultados completos em STATUS.md. A configuração useModulePath inicialmente gerava aviso de parâmetro desconhecido no Surefire 2.22.2 e foi removida. Nenhuma verificação foi desativada. O JAR vazio de um projeto apenas de testes não é artefato da loja.
 
 O Ubuntu/WSL disponível tem JDKs 11 e 21, sem JDK 17. Não foi instalado JDK no sistema nem executado build em outra linha para contornar a stack. Git Bash valida a receita POSIX usando o JDK Windows; não comprova execução nativa Linux.
+
+## Proposta — origem reforçada e piloto (11/11/2026)
+
+**Situação:** D1 decidida pelo autor; P1 a P3 pendentes de revisão. Nenhuma linha da baseline, do protocolo ou do avaliador foi alterada. Objetivo: a origem deve representar uma aplicação Java/Spring legada, com evidência visível disso. O [levantamento](LEVANTAMENTO_LEGADO.md) mostrou que a baseline atual só tem 4 das quebras conhecidas da passagem 2.7 → 3.x.
+
+### D1 — Origem e destino da migração (decidido pelo autor em 11/11/2026)
+
+| Escolha | Justificativa |
+| --- | --- |
+| Origem: Java 8 e Spring Boot 2.1.18.RELEASE | Última versão da linha 2.1 (Maven Central). Gerencia Spring 5.1.19, Spring Security 5.1.13, Hibernate 5.3.18, Hibernate Validator 6.0.21, Jackson 2.9.10, driver PostgreSQL 42.2.18, JUnit 4.12 e Surefire/Failsafe 2.22.2. Nessa linha, as alternativas modernas ainda não existem: a segurança só se configura com `WebSecurityConfigurerAdapter` e `authorizeRequests()...and()` (a DSL de lambdas surge no Security 5.2), e o padrão de testes é JUnit 4. O código idiomático da época já contém o legado, sem precisar plantá-lo. |
+| Destino: Java 17 e Spring Boot 3.5.x | Última linha 3.x. Exige Java 17 e Jakarta EE. Isola a passagem para o Boot 3 sem os efeitos do Boot 4. |
+| Uma única combinação | Simplifica o desenho experimental e a análise. A etapa Boot 4 do plano anterior sai do escopo. |
+
+Quebras que a migração precisa atravessar: Java 8 → 17; JUnit 4 → 5 (o motor do JUnit 4 sai do starter de testes no Boot 2.4); remoção do `WebSecurityConfigurerAdapter`; `javax` → `jakarta`; Hibernate 5.3 → 6; propriedades renomeadas ao longo da linha 2.x.
+
+Pendente de validação técnica antes de construir a nova baseline: JDK 8 local; versão do Testcontainers compatível com Java 8 e com o Docker atual; compatibilidade do driver 42.2.18 com PostgreSQL 16; Maven Wrapper 3.9.11 com Java 8. As datas de lançamento e de fim de suporte citadas na justificativa devem ser conferidas nas fontes oficiais.
+
+A reconstrução preserva o contrato da especificação e o avaliador externo, que só usa HTTP. AGENTS.md, README.md e a fixação de stack só mudam quando a fase de reconstrução for autorizada.
+
+### P1 — Critério para admitir uma característica legada
+
+Uma API legada correta para a época não é falha deliberada. Um item só entra na origem se atender às quatro condições:
+
+| Condição | Exigência |
+| --- | --- |
+| Correto e típico da época | Forma usual ou recomendada na documentação oficial do Spring 2.x, Spring Security 5.x ou Hibernate 5.x. Funciona sem erro na origem e não altera o contrato da especificação. |
+| Fonte externa | O item está listado como quebra ou descontinuação nos guias oficiais de migração do Spring Boot 3.0, Spring Security 5.8/6 ou Hibernate 6. A escolha cita a fonte; não depende de opinião sobre o que faria a LLM errar. |
+| Comportamento testado | Um teste interno ou do avaliador externo cobre o comportamento que o item implementa, e uma migração errada faz esse teste falhar. Os testes verificam comportamento observável, não a forma do código. Testes podem usar APIs legadas, e a migração deles também é avaliada. |
+| Sem pistas | Sem comentários, nomes, TODOs ou documentação na entrega que indiquem o que migrar. Sem defeitos introduzidos. |
+
+Cada item admitido entra numa tabela com: característica, classes, fonte que documenta a quebra e teste que cobre o comportamento. Essa tabela é a evidência de caracterização da origem.
+
+### P2 — Tentativas claude-01 e codex-03 como estudo piloto
+
+| Escolha | Justificativa |
+| --- | --- |
+| Reclassificar como piloto do protocolo `mes-boot35-v1` | Foram executadas sobre a origem atual, que não representa bem o legado. O resultado continua válido como registro: com uma origem de estilo moderno, as duas migrações levaram cerca de 5 minutos e consistiram quase só em troca de imports. |
+| Preservar as branches e os registros | `experimento/claude-boot-3.5.16` e `experimento/codex-boot-3.5.16` ficam como estão. Opcionalmente, criar uma tag no commit da baseline atual para identificar a origem do piloto. |
+| Reaproveitar a infraestrutura | O pacote congelado, o avaliador, as regras do operador e o roteiro de sondagem foram testados no piloto e servem de base para a próxima versão. |
+| Experimento definitivo em novo protocolo | A nova baseline, com a origem de D1, recebe um novo protocolo, novo snapshot do avaliador e novas branches. Os mesmos agentes e esforços (Médio) permitem comparar a origem fácil com a reforçada. |
+
+### P3 — Nova redação da regra do AGENTS.md
+
+A regra "Não adicione falhas deliberadas, pistas ou soluções de migração" foi reescrita no AGENTS.md para aplicar o critério P1 sem permitir defeitos ou pistas. A redação anterior fica registrada aqui para referência.

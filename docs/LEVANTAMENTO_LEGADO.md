@@ -1,6 +1,6 @@
 # Levantamento de características legadas — 11/11/2026
 
-Responde ao pedido da reunião de 11/11/2026: mostrar quais características antigas de Java e Spring a aplicação de origem tem, onde aparecem e o que a migração precisou mudar. Este documento é diagnóstico. Não altera a baseline, o protocolo ou as decisões, e a interpretação fica com o autor.
+Objetivo: mostrar quais características antigas de Java e Spring a aplicação de origem tem, onde aparecem e o que a migração precisou mudar. Este documento é diagnóstico. Não altera a baseline, o protocolo ou as decisões, e a interpretação fica com o autor.
 
 ## Conclusão curta
 
@@ -12,7 +12,7 @@ Das quebras conhecidas da passagem 2.7 → 3.x, só quatro aparecem no código:
 - o comportamento do token CSRF;
 - a barra final implícita nas rotas.
 
-Isso explica por que as duas migrações levaram poucos minutos e mudaram quase só imports. Pelo critério do orientador, a aplicação atual tem poucas "cascas de banana": é artificial e também superficial demais para representar o legado.
+Isso explica por que as duas migrações levaram poucos minutos e mudaram quase só imports. A aplicação atual tem poucas características legadas: além de artificial, é superficial demais para representar o legado.
 
 ## 1. O que já existe
 
@@ -52,6 +52,8 @@ Nenhum dos itens abaixo aparece hoje no código. Cada um é típico de aplicaç�
 
 ## 3. Java 17 ou Java 8 na origem
 
+Decidido em D1 (DECISOES.md): a nova origem usa Java 8 e Boot 2.1.18. A análise abaixo descreve a baseline atual.
+
 Hoje a origem usa Java 17. O Boot 2.7 aceita Java 8 a 21, e o Boot 3 exige Java 17. Começar em Java 8 tornaria obrigatório atualizar a linguagem e a plataforma junto com o Spring. Isso faz parte da modernização típica e dá uma justificativa natural para a escolha de origem e destino.
 
 Uso atual de recursos posteriores ao Java 8:
@@ -74,17 +76,19 @@ Características legadas que só um código Java 8 teria:
 
 ## 4. Pontos para a justificativa de origem e destino
 
+A justificativa adotada está em D1 (DECISOES.md). Os pontos abaixo valiam para a origem 2.7 e ficam como registro.
+
 As datas e prazos de suporte abaixo precisam ser conferidos nas fontes oficiais antes de entrar no texto da dissertação.
 
 - **Boot 2.7:** última linha 2.x. A 2.7.18 é a última versão de código aberto, e é a última linha que roda em Java 8.
 - **Boot 3.5:** última linha 3.x. Exige Java 17 e Jakarta EE 9 ou superior. Permite isolar a passagem 2 → 3 sem os efeitos do Boot 4, como Jackson 3 e as novas versões base.
-- **Uma origem e um destino:** combina com o que o orientador pediu. A etapa Boot 4 do plano anterior deixa de ser necessária.
+- **Uma origem e um destino:** simplifica o desenho experimental. A etapa Boot 4 do plano anterior deixa de ser necessária.
 
 ## 5. Decisões em aberto
 
-As decisões abaixo precisam do autor e passam por uma nova baseline com revisão:
+As decisões abaixo precisam do autor e passam por uma nova baseline com revisão. As propostas para os itens 2 e 4 estão em [DECISOES.md](DECISOES.md), seções P1 e P2.
 
-1. Mudar a origem para Java 8. Isso exige trocar o enforcer, o `List.of` e o cliente HTTP dos testes, e define o Java do destino.
+1. ~~Mudar a origem para Java 8.~~ Decidido em D1: Java 8 e Boot 2.1.18, com reconstrução da aplicação nessa stack.
 2. Quais itens do catálogo da seção 2 entram na aplicação. O AGENTS.md proíbe "falhas deliberadas, pistas". Seria preciso registrar a diferença entre usar uma API legada correta para a época (aceitável) e plantar um defeito (não aceitável). Cada item precisa ter comportamento coberto por teste, para que uma migração errada falhe.
 3. Se a barra final entra na especificação e nos testes.
 4. Tratar as tentativas claude-01 e codex-03 como piloto do protocolo, já que foram feitas com a origem atual.
