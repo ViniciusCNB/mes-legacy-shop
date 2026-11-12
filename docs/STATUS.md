@@ -4,7 +4,20 @@
 
 - **Direção:** o Ark fica fora por enquanto; a migração segue com Codex e Claude Code. A origem precisa ser revista (versão de Java e de Spring Boot, com justificativa), com uma única combinação de origem e destino, caracterização visível das características legadas e evidência de que a migração modernizou o código e os testes.
 - **Levantamento:** [LEVANTAMENTO_LEGADO.md](LEVANTAMENTO_LEGADO.md). A baseline só tem 4 das quebras conhecidas da passagem 2.7 → 3.x (`javax.*`, `antMatchers`, CSRF, barra final). Isso explica a facilidade das tentativas claude-01 e codex-03.
-- **Origem e destino decididos (D1):** Java 8 / Spring Boot 2.1.18 → Java 17 / Spring Boot 3.5.x. A aplicação será reconstruída na stack antiga com o mesmo contrato; a validação técnica (JDK 8, Testcontainers, driver) precede a reconstrução, que ainda não foi iniciada.
+- **Origem e destino decididos (D1):** Java 8 / Spring Boot 2.1.18 → Java 17 / Spring Boot 3.5.x. A aplicação será reconstruída na stack antiga com o mesmo contrato; a reconstrução ainda não foi iniciada.
+- **Validação técnica da stack de origem:** projeto mínimo descartável, fora do repositório, com Boot 2.1.18.RELEASE, Java 8, JUnit 4 e Testcontainers. `mvnw -B -ntp -V clean verify` passou com 1 teste de integração, 0 falhas.
+
+  | Componente | Versão resolvida | Verificação |
+  | --- | --- | --- |
+  | JDK | Temurin 1.8.0_512-b09 | ZIP oficial da Adoptium, SHA256 conferido; extraído em `~/.jdks/jdk8u512-b09`, sem alterar PATH ou JAVA_HOME global |
+  | Maven Wrapper | 3.9.11 (o mesmo do repositório) | Build completo em Java 8 |
+  | Spring | Boot 2.1.18, Spring 5.1.19, Security 5.1.13, Hibernate 5.3.18, Jackson 2.9.10.6, Tomcat 9.0.39 | Contexto completo com `WebSecurityConfigurerAdapter`, `authorizeRequests().antMatchers()` e `PostgreSQL95Dialect` |
+  | Banco | Driver 42.2.18 com PostgreSQL 16.10 (digest fixado) | `ddl-auto=validate` contra o esquema V001/V002 real, inserção e leitura por JPA |
+  | Testes | JUnit 4.12, `SpringRunner`, `@ClassRule`, `ApplicationContextInitializer`, Failsafe 2.22.2 | Execução real no Docker Desktop 4.38 (motor 27.5.1) |
+  | Testcontainers | 1.21.4 | Funciona com Java 8 e com o Docker atual |
+  | HTTP nos testes | `TestRestTemplate` e Apache HttpClient 4.5.13 | GET e PATCH reais; acesso negado retorna 403 |
+
+  Não validado ainda: JaCoCo 0.8.11 e maven-enforcer 3.4.1 em Java 8; CSRF por cookie no Security 5.1; avaliador externo contra um JAR 2.1.
 - **Propostas pendentes de revisão do autor:** critério para admitir características legadas (P1), reclassificação das tentativas atuais como piloto (P2) e nova redação da regra de falhas deliberadas no AGENTS.md (P3), em [DECISOES.md](DECISOES.md). Baseline, protocolo e avaliador não foram alterados.
 
 ## Análise complementar — barra final e CSRF (10/11/2026)

@@ -131,7 +131,7 @@ O Ubuntu/WSL disponível tem JDKs 11 e 21, sem JDK 17. Não foi instalado JDK no
 
 Quebras que a migração precisa atravessar: Java 8 → 17; JUnit 4 → 5 (o motor do JUnit 4 sai do starter de testes no Boot 2.4); remoção do `WebSecurityConfigurerAdapter`; `javax` → `jakarta`; Hibernate 5.3 → 6; propriedades renomeadas ao longo da linha 2.x.
 
-Pendente de validação técnica antes de construir a nova baseline: JDK 8 local; versão do Testcontainers compatível com Java 8 e com o Docker atual; compatibilidade do driver 42.2.18 com PostgreSQL 16; Maven Wrapper 3.9.11 com Java 8. As datas de lançamento e de fim de suporte citadas na justificativa devem ser conferidas nas fontes oficiais.
+Validação técnica de 11/11/2026 (STATUS.md): JDK Temurin 8u512, Maven Wrapper 3.9.11, Testcontainers 1.21.4, driver 42.2.18 e PostgreSQL 16.10 funcionaram juntos num projeto mínimo. Testcontainers 1.21.4 é infraestrutura de teste, fixado por BOM próprio como na baseline atual, e não faz parte do legado avaliado: versões da época não são garantidas com o Docker atual. As datas de lançamento e de fim de suporte citadas na justificativa devem ser conferidas nas fontes oficiais.
 
 A reconstrução preserva o contrato da especificação e o avaliador externo, que só usa HTTP. AGENTS.md, README.md e a fixação de stack só mudam quando a fase de reconstrução for autorizada.
 
