@@ -1,5 +1,16 @@
 # Status
 
+## Protocolo v2 — R7 (15/11/2026)
+
+- Decisões: prompt exige JUnit 5; barra final fora do contrato; teste de mutação não adotado agora.
+- Avaliador 1.1.0: aplicação em JDK separado (`APPLICATION_JAVA_HOME`/`-ApplicationJavaHome`). Novo snapshot: SHA256 de evaluation/SNAPSHOT.sha256 = 72f34cd4e9e7e3283c524c0dcc0b337018e286ac421adad59721621dd995fd7d; `sha256sum -c` confere os nove insumos.
+- Especificação sem as ressalvas de atribuição; contrato inalterado.
+- Entrada do agente (`experiments/input/`) reescrita para a origem Java 8 / Boot 2.1; prompt exige Java 17, Boot 3.5.16 e testes em JUnit 5.
+- Gerador do pacote: funciona em Windows PowerShell 5.1; teste sobre fa28d21 gerou 72 arquivos, sem evaluation/, tools/ ou documentos de caracterização. O pacote definitivo depende do commit revisado.
+- Protocolo `mes-boot35-v2` em rascunho em [EXPERIMENTO.md](EXPERIMENTO.md).
+- Avaliador 1.1.0 contra o JAR da origem (SHA256 0d58a11d…676f) com a aplicação em JDK 8: 26/26, BUILD SUCCESS; run.txt registra javaVersion=17.0.15 e applicationJavaVersion=1.8.0_512 e o snapshot 72f34cd4….
+- **Pendente:** revisão do autor; commit da baseline e geração do pacote definitivo com `-Baseline`.
+
 ## Caracterização da origem — R6 (11/11/2026)
 
 - Tabela em [CARACTERIZACAO_ORIGEM.md](CARACTERIZACAO_ORIGEM.md): 19 características legadas (15 de quebra, 4 de obsolescência), com local, efeito no Boot 3.5, verificação nos JARs do Boot 3.5.16 e teste que detecta migração errada.

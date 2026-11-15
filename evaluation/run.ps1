@@ -1,6 +1,7 @@
-param(
+﻿param(
     [ValidateRange(1024, 65535)][int]$HttpPort = 18080,
-    [string]$ApplicationJar
+    [string]$ApplicationJar,
+    [string]$ApplicationJavaHome = $env:APPLICATION_JAVA_HOME
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
@@ -11,6 +12,11 @@ $javaVersion = (& $java -version 2>&1 | Out-String).Trim()
 if ($LASTEXITCODE -ne 0 -or $javaVersion -notmatch 'version "17\.') {
     throw 'JAVA_HOME deve selecionar JDK 17; não alterar a stack para executar a avaliação.'
 }
+# The evaluator always builds with JDK 17; the application may run on another JDK (e.g. the Java 8 origin).
+if (!$ApplicationJavaHome) { $ApplicationJavaHome = $env:JAVA_HOME }
+$applicationJava = Join-Path $ApplicationJavaHome 'bin/java.exe'
+if (!(Test-Path -LiteralPath $applicationJava)) { throw "Java da aplicação não encontrado: $applicationJava" }
+$applicationJavaVersion = (& $applicationJava -version 2>&1 | Out-String).Trim()
 if (!$ApplicationJar) { $ApplicationJar = Join-Path $repo 'target/mes-legacy-shop-0.0.1-SNAPSHOT.jar' }
 $ApplicationJar = (Resolve-Path -LiteralPath $ApplicationJar).Path
 $listener = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $HttpPort)
@@ -55,7 +61,7 @@ try {
     }
     try {
         $start = @{
-            FilePath=$java; ArgumentList=@('-jar', ('"' + $ApplicationJar + '"'))
+            FilePath=$applicationJava; ArgumentList=@('-jar', ('"' + $ApplicationJar + '"'))
             WorkingDirectory=$repo; WindowStyle='Hidden'; PassThru=$true
             RedirectStandardOutput=(Join-Path $artifacts 'application.log')
             RedirectStandardError=(Join-Path $artifacts 'application-error.log')
@@ -80,12 +86,12 @@ try {
     }
     if (!$ready) { throw 'Saúde não ficou UP em 90s; consulte os logs.' }
     @{
-        project=$project; baseUrl=$baseUrl; databasePort=$databasePort; javaVersion=$javaVersion
+        project=$project; baseUrl=$baseUrl; databasePort=$databasePort; javaVersion=$javaVersion; applicationJavaVersion=$applicationJavaVersion
         applicationJar=$ApplicationJar
         applicationSha256=(Get-FileHash -LiteralPath $ApplicationJar -Algorithm SHA256).Hash.ToLowerInvariant()
         sourceCommit=((& git rev-parse HEAD) -join '').Trim()
         sourceDirty=([bool](& git status --porcelain))
-        evaluatorVersion='1.0.0'
+        evaluatorVersion='1.1.0'
         evaluatorSnapshotSha256=$(if (Test-Path 'evaluation/SNAPSHOT.sha256') { (Get-FileHash 'evaluation/SNAPSHOT.sha256' -Algorithm SHA256).Hash.ToLowerInvariant() } else { $null })
         startedAt=[DateTime]::UtcNow.ToString('o')
     } | ConvertTo-Json | Set-Content (Join-Path $artifacts 'run.json') -Encoding UTF8

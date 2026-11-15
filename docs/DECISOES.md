@@ -176,3 +176,23 @@ Escolhas de implementação da reconstrução sob D1 e P1. Contrato, esquema SQL
 | Java 8 no código | `Collections.emptyList()`/`singletonList`, `Arrays.asList`, `String.join` com `Collections.nCopies`, tipos explícitos no lugar de `var` e `Optional.get()` onde o teste exige presença. |
 | Avaliador com a aplicação em JDK 17 | `evaluation/run.sh` exige JDK 17 e usa o mesmo `JAVA_HOME` para o JAR. Sem alterar o snapshot, a execução em Java 8 foi conferida pelo roteiro de sondagem. A separação entre o JDK do avaliador e o da aplicação fica para o R7. |
 | `tools/TestInventory.java` | Inventário por método: casos executados (relatórios Failsafe), casos ignorados, pontos de asserção textuais e marcadores de skip. Serve para comparar duas versões da mesma suíte. |
+
+## Protocolo v2 — R7 (15/11/2026)
+
+Decisões do autor tomadas no R7, conforme previsto no plano:
+
+| Decisão | Escolha | Justificativa |
+| --- | --- | --- |
+| Testes em JUnit 5 | Exigido no prompt, sem o motor vintage do JUnit 4 | Torna a migração da suíte um requisito explícito e mensurável pelo inventário e pela varredura. Sem ele, adicionar o motor vintage passaria nos testes sem modernizá-los. |
+| Barra final | Fora do contrato | A especificação continua sem defini-la; segue medida pelo roteiro de sondagem, como no piloto, para não mudar o critério entre as rodadas. |
+| Teste de mutação (PIT) | Não adotado agora | Inventário 1:1, varredura e avaliador já cobrem a evidência principal; o PIT com Testcontainers é lento e exigiria validar compatibilidade em Java 8 e 17. Pode entrar depois como análise complementar. |
+
+Escolhas de implementação do R7:
+
+| Escolha | Justificativa |
+| --- | --- |
+| Avaliador 1.1.0 com JDK separado para a aplicação | O avaliador compila e roda com JDK 17; a origem precisa rodar em Java 8. `APPLICATION_JAVA_HOME` (Bash) ou `-ApplicationJavaHome` (PowerShell) escolhe o JDK da aplicação; o padrão continua sendo o JAVA_HOME. `run.txt`/`run.json` registram as duas versões. Testes HTTP, fixture e compose inalterados. |
+| BOM UTF-8 em `run.ps1` e `New-MigrationInput.ps1` | O Windows PowerShell 5.1 lê scripts sem BOM como ANSI, o que corrompia os acentos usados nas expressões do gerador. O ambiente do operador não tem PowerShell 7. |
+| Gerador do pacote com commit obrigatório | `-Baseline` exige o commit completo revisado; a saída padrão passa a `.experiment-local/input-v2`. Protocolo `mes-boot35-v2`, origem Java 8 / Boot 2.1.18.RELEASE no manifesto. |
+| Entrada do agente reescrita | `experiments/input/` descreve o estado atual (Java 8 / Boot 2.1) e remete as versões de destino ao prompt. Sem menção a marcadores, caracterização ou resultados do piloto. |
+| Ressalvas de atribuição retiradas da especificação | As frases removidas não faziam parte do contrato; o gerador já as excluía do pacote. Exige novo snapshot do avaliador. |

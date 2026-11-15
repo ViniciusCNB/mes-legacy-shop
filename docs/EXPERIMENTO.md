@@ -83,3 +83,46 @@ Mantenha o registro fora da pasta fornecida ao agente. Os resultados dessa prepa
 **Configuração antes do envio.** A permissão de Acesso total da tarefa Codex é definida antes do envio do prompt e registrada como configuração, como o modo auto na condição Claude Code. Na codex-02, ela foi ajustada durante a tentativa e registrada como intervenção.
 
 **Status.** As tentativas codex-01 e codex-02 (GPT‑6.1 Sol, Alto) continuam como evidência de bloqueio de infraestrutura. A codex-03 segue as emendas v2 e v3, com mesmo ZIP, prompt.txt, limite de 45 minutos, avaliador congelado e regras de assistência.
+
+# Protocolo experimental — mes-boot35-v2
+
+Preparação: 15/11/2026. **Situação: rascunho para revisão do autor; nenhuma tentativa foi iniciada.** O protocolo v1 e suas emendas ficam como registro do estudo piloto (tentativas claude-01 e codex-03, origem Java 17 / Boot 2.7.18). O v2 usa a origem reconstruída (D1 de [DECISOES.md](DECISOES.md)) e mantém as regras do v1 e das emendas v2 e v3, salvo o que está abaixo.
+
+## Origem, destino e condições
+
+| Item | Regra |
+| --- | --- |
+| Origem | Java 8 e Spring Boot 2.1.18.RELEASE, [caracterizada](CARACTERIZACAO_ORIGEM.md) antes do experimento. Commit da baseline: **a fixar pelo autor** depois da revisão do R7; o gerador do pacote exige esse commit completo. |
+| Destino | Java 17 e Spring Boot 3.5.16, ainda o último patch da linha 3.5 no Maven Central em 15/11/2026. Testes internos em JUnit 5 (Jupiter), sem o motor vintage do JUnit 4, como requisito explícito do prompt. |
+| Condição C1 | Claude Code, modelo claude-opus-5-5, esforço médio, modo de permissão auto, em sessão nova sem o histórico de construção. |
+| Condição C2 | Codex desktop, GPT‑6.1 Sol, esforço Médio, com Acesso total configurado antes do envio do prompt, em tarefa nova. |
+| Fora do v2 | Ark e etapa Boot 4. |
+| Repetições | Uma tentativa por condição. Estudo de caso exploratório. A ordem das condições é registrada; o resultado de uma não orienta a outra. |
+| Ambiente | Windows; Docker Desktop 4.38 com Resource Saver desligado; PostgreSQL 16.10 pelo digest fixado; JDK 17 em JAVA_HOME no ambiente do agente; pastas de tentativa fora do OneDrive. Registrar JDK, Maven, Docker e Compose. |
+| Limite, assistência e custo | Iguais ao v1: 45 minutos de tempo de parede, operador sem pistas ou correções técnicas, tokens e custos quando observáveis. |
+
+## Pacote de entrada
+
+Gerado por [New-MigrationInput.ps1](../experiments/New-MigrationInput.ps1) a partir do commit da baseline, em Windows PowerShell 5.1 ou PowerShell 7:
+
+~~~powershell
+.\experiments\New-MigrationInput.ps1 -Baseline <commit-completo-da-baseline>
+~~~
+
+O pacote contém src/ (código, testes e SQL), POM, Wrapper, Compose, .env.example, o contrato público extraído de docs/ESPECIFICACAO.md e os arquivos da tarefa em [experiments/input/](../experiments/input/) (AGENTS.md, README.md e prompt.txt). Não contém evaluation/, tools/, documentos de caracterização, histórico Git nem resultados do piloto. Um teste do gerador sobre o commit fa28d21 produziu 72 arquivos sem nenhum desses itens; o SHA256 válido é o do pacote gerado a partir do commit revisado.
+
+## Avaliação de cada tentativa
+
+| Verificação | Critério |
+| --- | --- |
+| Build interno | `clean verify` na saída do agente e em cópia independente, com JDK 17: sem falhas, erros ou skips. |
+| Inventário da suíte | `java tools/TestInventory.java` comparado com a origem: 39 métodos, 123 casos executados, 230 pontos de asserção, nenhum skip. Cada diferença é classificada; remoção de cenário ou de asserção é falha. |
+| Varredura de legado | `java tools/LegacyScan.java <saída>`: os marcadores de quebra (15 tipos) devem zerar; os de obsolescência (4 tipos) são registrados como grau de modernização. JUnit 4 remanescente descumpre o prompt. |
+| Avaliador externo 1.1.0 | 26/26 com a aplicação em JDK 17. A origem é avaliada com `APPLICATION_JAVA_HOME` no JDK 8 como referência. |
+| Roteiro de sondagem | `experiments/supplementary/probe-behaviors.sh` com a aplicação em JDK 17, comparado com a origem em JDK 8. A barra final continua fora do contrato e é registrada como análise complementar. |
+
+Classificação: sucesso sob as regras; falha de build/testes/contrato; falha de requisito do prompt (por exemplo, JUnit 4 remanescente); encerramento por limite; ou bloqueio de infraestrutura. O registro mínimo por tentativa é o do v1, acrescido do inventário e da varredura.
+
+## Snapshot do avaliador
+
+Versão 1.1.0: a aplicação pode rodar em JDK diferente do avaliador (`APPLICATION_JAVA_HOME` ou `-ApplicationJavaHome`), e as duas versões de Java ficam registradas. Os testes HTTP, a fixture e o compose não mudaram. As ressalvas de atribuição foram retiradas de docs/ESPECIFICACAO.md, sem mudança de contrato. O novo SHA256 de evaluation/SNAPSHOT.sha256 está em [STATUS.md](STATUS.md).

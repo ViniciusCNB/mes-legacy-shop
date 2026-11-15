@@ -66,6 +66,6 @@ A suíte do piloto tem 39 métodos de teste, 16 deles parametrizados, que geram 
 | R4 | Suíte interna reescrita em JUnit 4, caso a caso, a partir da atual | `clean verify` com o mesmo conjunto de cenários; inventário 1:1 |
 | R5 | Avaliador externo e roteiro de sondagem contra o JAR 2.1 | 26/26; diferenças de sondagem documentadas |
 | R6 | Tabela de caracterização (P1), inventário da suíte, varredura de marcadores e métricas | Tabela com fonte e teste para cada item. Concluída em 11/11/2026: [CARACTERIZACAO_ORIGEM.md](CARACTERIZACAO_ORIGEM.md) |
-| R7 | Nova versão da especificação e do snapshot do avaliador; protocolo v2, pacote e prompt. Decidir neste momento: se o prompt exige JUnit 5 explicitamente, se o teste de mutação será adotado e se a barra final entra na especificação | Revisados pelo autor antes de qualquer tentativa. Incluir: `experiments/input/AGENTS.md`, `README.md` e `prompt.txt` reescritos para a nova stack sem pistas de migração; pacote sem `tools/` e sem documentos de caracterização |
+| R7 | Nova versão da especificação e do snapshot do avaliador; protocolo v2, pacote e prompt. Decidido em 15/11/2026: o prompt exige JUnit 5; teste de mutação não adotado agora; barra final fora da especificação (DECISOES.md) | Revisados pelo autor antes de qualquer tentativa. Incluir: `experiments/input/AGENTS.md`, `README.md` e `prompt.txt` reescritos para a nova stack sem pistas de migração; pacote sem `tools/` e sem documentos de caracterização |
 
 Depois do R7: tentativas com Codex e Claude Code, com esforço Médio, nas mesmas condições.

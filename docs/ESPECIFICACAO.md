@@ -2,7 +2,7 @@
 
 ## Estado do contrato
 
-As Fases 1 a 4 implementam saúde, catálogo, segurança/administração e pedidos. Resultados reais em STATUS.md. O contrato da Fase 4 abaixo concretiza as propostas do autor, sem acordo adicional atribuído ao professor.
+As Fases 1 a 4 implementam saúde, catálogo, segurança/administração e pedidos. Resultados reais em STATUS.md. O contrato da Fase 4 abaixo concretiza as propostas do autor.
 
 ## Fundação implementada
 
@@ -67,7 +67,7 @@ Frontend, pagamento real, frete, cupons, integração externa, mensageria, micro
 
 ## Contrato do catálogo — Fase 2
 
-Autorização do autor em 15/10/2026: prosseguir para o Catálogo e retornar a porta local do PostgreSQL a 5432. Os detalhes abaixo são decisões de implementação dentro desse escopo, sem atribuição ao professor. A execução dos testes e a revisão do autor são registradas separadamente em STATUS.md.
+Autorização do autor em 15/10/2026: prosseguir para o Catálogo e retornar a porta local do PostgreSQL a 5432. Os detalhes abaixo são decisões de implementação dentro desse escopo. A execução dos testes e a revisão do autor são registradas separadamente em STATUS.md.
 
 - GET /api/products: público, somente ativos, ordem fixa id crescente. page começa em 0, padrão 0, máximo 1.000.000; size padrão 20, entre 1 e 100. Parâmetros omitidos ou vazios usam os padrões. O teto de page mantém o offset dentro do intervalo aceito pelo JPA. Ordenação configurável não faz parte deste contrato.
 - Resposta 200: {"content":[{"id":1,"sku":"MUG-001","name":"Caneca MES","price":39.90,"stockQuantity":10}],"page":0,"size":20,"totalElements":1,"totalPages":1}. Página além do resultado retorna content vazio com totais preservados; catálogo vazio tem totalPages=0.
@@ -79,7 +79,7 @@ Autorização do autor em 15/10/2026: prosseguir para o Catálogo e retornar a p
 
 ## Contrato da Fase 3 — Segurança e administração
 
-Autorizado pelo autor após o commit f452ab5. As escolhas rotineiras abaixo são de implementação, sem atribuição de novas decisões ao professor. Pedidos continuam fora desta fase.
+Autorizado pelo autor após o commit f452ab5. As escolhas rotineiras abaixo são de implementação. Pedidos continuam fora desta fase.
 
 - AppUser: id Long/IDENTITY, name até 160, email canônico minúsculo até 254 e único, password_hash BCrypt de 60 caracteres, role ADMIN/CUSTOMER e active obrigatório. SQL V003; sem cadastro público ou API de usuários.
 - HTTP Basic consulta usuários e situação ativa no banco em cada requisição; BCrypt custo 10. Não há sessão de autenticação, login por formulário, JWT ou logout de sessão. O cookie CSRF não autentica e não há JSESSIONID.
@@ -96,7 +96,7 @@ Autorizado pelo autor após o commit f452ab5. As escolhas rotineiras abaixo são
 
 ## Contrato da Fase 4 — Pedidos
 
-Autorizado pelo autor após o commit 6778cd2 da Fase 3. São decisões de implementação no escopo proposto, sem nova aprovação atribuída ao professor. Resultados reais em STATUS.md.
+Autorizado pelo autor após o commit 6778cd2 da Fase 3. São decisões de implementação no escopo proposto. Resultados reais em STATUS.md.
 
 - POST /api/orders: somente CUSTOMER, corpo {"items":[{"productId":10,"quantity":2}]}; entre 1 e 100 itens não nulos, IDs Long positivos distintos e quantidades Integer positivas. Não aceita customerId, preços, total ou campos desconhecidos. Retorna 201 e Location /api/orders/{id}.
 - Resposta: {"id":1,"customerId":2,"status":"CREATED","createdAt":"2026-10-15T12:00:00Z","cancelledAt":null,"total":39.80,"items":[{"productId":10,"quantity":2,"unitPrice":19.90,"subtotal":39.80}]}. Não contém usuário, hash ou entidade JPA. Itens ordenados por productId; instantes UTC ISO-8601 com Z, persistidos com precisão de microssegundos. cancelledAt é null até cancelar.

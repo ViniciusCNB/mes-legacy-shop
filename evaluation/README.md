@@ -1,4 +1,4 @@
-# Avaliador HTTP independente — 1.0.0
+# Avaliador HTTP independente — 1.1.0
 
 Projeto Maven separado, sem parent Boot e sem imports/dependências da aplicação, Spring, JPA, JDBC ou Testcontainers. Os testes enxergam somente HTTP. Não é módulo do POM raiz e não é parte do JAR da loja.
 
@@ -6,17 +6,18 @@ JUnit Jupiter 5.8.2 e Jackson Databind/Core/Annotations 2.13.5, fixados no POM; 
 
 ## Execução completa a partir de banco novo
 
-Execute da raiz do repositório, um roteiro por checkout de cada vez. Pré-requisitos da aplicação, JDK 17 selecionado em JAVA_HOME, Docker/Compose acessível e porta HTTP 18080 livre. PowerShell 7 no Windows; Bash, curl, sed, grep, coreutils e ferramentas do Wrapper no Linux. Os scripts rejeitam JDK fora de 17 antes de criar recursos.
+Execute da raiz do repositório, um roteiro por checkout de cada vez. Pré-requisitos: JDK 17 selecionado em JAVA_HOME para o avaliador, Docker/Compose acessível e porta HTTP 18080 livre. Desde a versão 1.1.0, a aplicação pode rodar em outro JDK, informado em APPLICATION_JAVA_HOME (ou `-ApplicationJavaHome` no PowerShell); sem ele, usa o JAVA_HOME. A origem Java 8 deve ser avaliada com o JDK 8 e o destino com o JDK 17. PowerShell 7 no Windows; Bash, curl, sed, grep, coreutils e ferramentas do Wrapper no Linux. Os scripts rejeitam JAVA_HOME fora de 17 antes de criar recursos e registram as duas versões de Java.
 
-PowerShell:
+PowerShell, origem em Java 8 (o build da aplicação usa o JDK 8):
 
 ~~~powershell
-$env:JAVA_HOME = 'C:\caminho\para\jdk-17'
+$env:JAVA_HOME = 'C:\caminho\para\jdk-8'
 .\mvnw.cmd -B -ntp clean verify
-.\evaluation\run.ps1
+$env:JAVA_HOME = 'C:\caminho\para\jdk-17'
+.\evaluationun.ps1 -ApplicationJavaHome 'C:\caminho\para\jdk-8'
 ~~~
 
-Bash/Linux:
+Bash/Linux, destino em Java 17:
 
 ~~~sh
 export JAVA_HOME=/caminho/para/jdk-17
@@ -24,6 +25,8 @@ export PATH="$JAVA_HOME/bin:$PATH"
 sh ./mvnw -B -ntp clean verify
 bash evaluation/run.sh
 ~~~
+
+Para a origem no Bash: `APPLICATION_JAVA_HOME=/caminho/para/jdk-8 bash evaluation/run.sh`.
 
 O build raiz verifica a aplicação e produz seu JAR. Os scripts exigem esse artefato; não silenciam nem pulam testes para criá-lo. Um build raiz com clean remove também target/evaluation-runs: arquive as evidências antes de limpar.
 

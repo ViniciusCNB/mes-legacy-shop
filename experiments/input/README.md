@@ -2,9 +2,13 @@
 
 API REST de catálogo, administração e pedidos. O contrato está em [docs/ESPECIFICACAO.md](docs/ESPECIFICACAO.md); a tarefa a executar está em [prompt.txt](prompt.txt).
 
+## Estado atual
+
+O projeto usa Java 8 e Spring Boot 2.1.18.RELEASE, com Maven Wrapper 3.9.11. A suíte interna é formada por testes de integração executados pelo Failsafe na fase `verify`, com PostgreSQL 16 real em contêineres descartáveis.
+
 ## Ambiente
 
-Use Java 17 com JAVA_HOME apontando para o JDK, Maven Wrapper 3.9.11 e Docker Desktop em modo de contêineres Linux no Windows. Docker precisa estar acessível à JVM. Não é necessário iniciar o Compose local para executar os testes internos: cada suíte de integração usa um PostgreSQL descartável e aplica o esquema versionado.
+Use JAVA_HOME apontando para o JDK da versão alvo da tarefa, Maven Wrapper 3.9.11 e Docker Desktop em modo de contêineres Linux no Windows. Docker precisa estar acessível à JVM. Não é necessário iniciar o Compose local para executar os testes internos: cada suíte de integração usa um PostgreSQL descartável e aplica o esquema versionado.
 
 PowerShell:
 

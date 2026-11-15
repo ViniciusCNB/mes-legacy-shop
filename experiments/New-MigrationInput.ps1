@@ -1,14 +1,17 @@
-#Requires -Version 7.0
+﻿#Requires -Version 5.1
 [CmdletBinding()]
 param(
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot '../.experiment-local/input')
+    # Full commit of the reviewed baseline; the package is exported from it, never from the working tree.
+    [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-f]{40}$')][string]$Baseline,
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot '../.experiment-local/input-v2')
 )
 
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$baseline = '1e8ea40939d92023df8dab81b64506c8f83a9ca6'
+$baseline = $Baseline
 $target = '3.5.16'
-$baseName = "mes-legacy-shop-boot-$target-input"
+$baseName = "mes-legacy-shop-boot-2.1-to-$target-input"
 $output = [IO.Path]::GetFullPath($OutputDirectory)
 $archive = Join-Path $output "$baseName.zip"
 $manifest = Join-Path $output "$baseName.manifest.json"
@@ -69,9 +72,11 @@ try {
     } finally { $zip.Dispose() }
 
     $record = [ordered]@{
-        protocol = 'mes-boot35-v1'
+        protocol = 'mes-boot35-v2'
         baseline_commit = $baseline
-        spring_boot_from = '2.7.18'
+        spring_boot_from = '2.1.18.RELEASE'
+        java_from = '8'
+        java_to = '17'
         spring_boot_to = $target
         archive = [IO.Path]::GetFileName($archive)
         archive_sha256 = (Get-FileHash -LiteralPath $partial).Hash.ToLowerInvariant()

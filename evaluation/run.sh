@@ -15,6 +15,11 @@ fi
 java_version=$("$JAVA_HOME/bin/java" -XshowSettings:properties -version 2>&1 | sed -n 's/.*java.version = //p' | head -1)
 java_version=$(printf '%s' "$java_version" | tr -d '\r')
 case "$java_version" in 17.*) ;; *) echo 'JAVA_HOME deve selecionar JDK 17.' >&2; exit 1;; esac
+# The evaluator always builds with JDK 17; the application may run on another JDK (e.g. the Java 8 origin).
+app_java_home=${APPLICATION_JAVA_HOME:-$JAVA_HOME}
+test -x "$app_java_home/bin/java" || test -x "$app_java_home/bin/java.exe" || { echo "Java da aplicação não encontrado em $app_java_home" >&2; exit 1; }
+app_java_version=$("$app_java_home/bin/java" -XshowSettings:properties -version 2>&1 | sed -n 's/.*java.version = //p' | head -1 | tr -d '\r')
+test -n "$app_java_version" || { echo 'Versão do Java da aplicação não identificada.' >&2; exit 1; }
 project="mes-evaluation-$(od -An -N6 -tx1 /dev/urandom | tr -d ' \n\r')"
 [[ "$project" =~ ^mes-evaluation-[0-9a-f]{12}$ ]] || exit 1
 artifacts="$repo/target/evaluation-runs/$project"
@@ -56,7 +61,7 @@ database_port=$(printf '%s\n' "$binding" | sed 's/.*://')
 "${compose[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U shop_evaluation -d shop_evaluation < evaluation/fixtures/seed.sql
 POSTGRES_HOST=127.0.0.1 POSTGRES_PORT="$database_port" POSTGRES_DB=shop_evaluation \
 POSTGRES_USER=shop_evaluation POSTGRES_PASSWORD=evaluation_local_only SERVER_PORT="$port" \
-SPRING_PROFILES_ACTIVE=evaluation "$JAVA_HOME/bin/java" -jar "$app_jar" > "$artifacts/application.log" 2>&1 &
+SPRING_PROFILES_ACTIVE=evaluation "$app_java_home/bin/java" -jar "$app_jar" > "$artifacts/application.log" 2>&1 &
 application_pid=$!
 ready=false
 for attempt in $(seq 1 90); do
@@ -68,11 +73,11 @@ for attempt in $(seq 1 90); do
 done
 test "$ready" = true || { echo 'Saúde não ficou UP em 90s.' >&2; exit 1; }
 {
-  printf 'project=%s\nbaseUrl=http://127.0.0.1:%s\ndatabasePort=%s\njavaVersion=%s\n' "$project" "$port" "$database_port" "$java_version"
+  printf 'project=%s\nbaseUrl=http://127.0.0.1:%s\ndatabasePort=%s\njavaVersion=%s\napplicationJavaVersion=%s\n' "$project" "$port" "$database_port" "$java_version" "$app_java_version"
   printf 'sourceCommit=%s\n' "$(git rev-parse HEAD)"
   printf 'sourceDirty=%s\n' "$(test -z "$(git status --porcelain)" && echo false || echo true)"
   if [ -f evaluation/SNAPSHOT.sha256 ]; then sha256sum evaluation/SNAPSHOT.sha256; fi
-  printf 'evaluatorVersion=1.0.0\napplicationJar=%s\n' "$app_jar"
+  printf 'evaluatorVersion=1.1.0\napplicationJar=%s\n' "$app_jar"
   sha256sum "$app_jar"
 } > "$artifacts/run.txt"
 evaluation_started=true
