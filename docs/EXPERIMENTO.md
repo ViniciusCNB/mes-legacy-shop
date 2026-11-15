@@ -86,13 +86,13 @@ Mantenha o registro fora da pasta fornecida ao agente. Os resultados dessa prepa
 
 # Protocolo experimental — mes-boot35-v2
 
-Preparação: 15/11/2026. **Situação: rascunho para revisão do autor; nenhuma tentativa foi iniciada.** O protocolo v1 e suas emendas ficam como registro do estudo piloto (tentativas claude-01 e codex-03, origem Java 17 / Boot 2.7.18). O v2 usa a origem reconstruída (D1 de [DECISOES.md](DECISOES.md)) e mantém as regras do v1 e das emendas v2 e v3, salvo o que está abaixo.
+Preparação: 15/11/2026. **Situação: baseline e pacote fixados em 15/11/2026; nenhuma tentativa foi iniciada.** O protocolo v1 e suas emendas ficam como registro do estudo piloto (tentativas claude-01 e codex-03, origem Java 17 / Boot 2.7.18). O v2 usa a origem reconstruída (D1 de [DECISOES.md](DECISOES.md)) e mantém as regras do v1 e das emendas v2 e v3, salvo o que está abaixo.
 
 ## Origem, destino e condições
 
 | Item | Regra |
 | --- | --- |
-| Origem | Java 8 e Spring Boot 2.1.18.RELEASE, [caracterizada](CARACTERIZACAO_ORIGEM.md) antes do experimento. Commit da baseline: **a fixar pelo autor** depois da revisão do R7; o gerador do pacote exige esse commit completo. |
+| Origem | Java 8 e Spring Boot 2.1.18.RELEASE, [caracterizada](CARACTERIZACAO_ORIGEM.md) antes do experimento. Commit da baseline: `32537ebe5fa7301b75fe30e2b86afa43abb5c2c7`, fixado pelo autor em 15/11/2026 depois da revisão do R7. |
 | Destino | Java 17 e Spring Boot 3.5.16, ainda o último patch da linha 3.5 no Maven Central em 15/11/2026. Testes internos em JUnit 5 (Jupiter), sem o motor vintage do JUnit 4, como requisito explícito do prompt. |
 | Condição C1 | Claude Code, modelo claude-opus-5-5, esforço médio, modo de permissão auto, em sessão nova sem o histórico de construção. |
 | Condição C2 | Codex desktop, GPT‑6.1 Sol, esforço Médio, com Acesso total configurado antes do envio do prompt, em tarefa nova. |
@@ -109,7 +109,17 @@ Gerado por [New-MigrationInput.ps1](../experiments/New-MigrationInput.ps1) a par
 .\experiments\New-MigrationInput.ps1 -Baseline <commit-completo-da-baseline>
 ~~~
 
-O pacote contém src/ (código, testes e SQL), POM, Wrapper, Compose, .env.example, o contrato público extraído de docs/ESPECIFICACAO.md e os arquivos da tarefa em [experiments/input/](../experiments/input/) (AGENTS.md, README.md e prompt.txt). Não contém evaluation/, tools/, documentos de caracterização, histórico Git nem resultados do piloto. Um teste do gerador sobre o commit fa28d21 produziu 72 arquivos sem nenhum desses itens; o SHA256 válido é o do pacote gerado a partir do commit revisado.
+O pacote contém src/ (código, testes e SQL), POM, Wrapper, Compose, .env.example, o contrato público extraído de docs/ESPECIFICACAO.md e os arquivos da tarefa em [experiments/input/](../experiments/input/) (AGENTS.md, README.md e prompt.txt). Não contém evaluation/, tools/, documentos de caracterização, histórico Git nem resultados do piloto. **Pacote definitivo (15/11/2026):** `mes-legacy-shop-boot-2.1-to-3.5.16-input.zip`, gerado a partir do commit 32537eb, com 72 arquivos e nenhum dos itens excluídos. O manifesto fica com o operador em `.experiment-local/input-v2/`.
+
+| Arquivo | SHA256 |
+| --- | --- |
+| ZIP do pacote | `07804f235afc5ec4ca0993e26eced9ca5ff0ceefa3699a4b7311bf9fc4f8e4e5` |
+| prompt.txt | `61f0fbf02e4c6423e37a0ba618861f5218b4997d69945d987adec610ddbd5f13` |
+| AGENTS.md | `53dbfe89b4f247aa817e07928d383d72268acc83cf34144dbe5b3990e1e7bb5f` |
+| README.md | `38433739ef8051aef064c51335ab3b07f35bc4f6523ce1b068d2b4144467df25` |
+| docs/ESPECIFICACAO.md | `9f695eed8089f996e538c6e3417868b68e00f9993d166a2dd1c849effd8351f2` |
+
+Antes de cada tentativa, confira o SHA256 do ZIP com `Get-FileHash`. Se ele não bater, não use o pacote.
 
 ## Avaliação de cada tentativa
 

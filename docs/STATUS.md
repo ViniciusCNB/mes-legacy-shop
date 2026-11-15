@@ -9,7 +9,8 @@
 - Gerador do pacote: funciona em Windows PowerShell 5.1; teste sobre fa28d21 gerou 72 arquivos, sem evaluation/, tools/ ou documentos de caracterização. O pacote definitivo depende do commit revisado.
 - Protocolo `mes-boot35-v2` em rascunho em [EXPERIMENTO.md](EXPERIMENTO.md).
 - Avaliador 1.1.0 contra o JAR da origem (SHA256 0d58a11d…676f) com a aplicação em JDK 8: 26/26, BUILD SUCCESS; run.txt registra javaVersion=17.0.15 e applicationJavaVersion=1.8.0_512 e o snapshot 72f34cd4….
-- **Pendente:** revisão do autor; commit da baseline e geração do pacote definitivo com `-Baseline`.
+- Baseline fixada pelo autor no commit 32537eb. Pacote definitivo gerado com 72 arquivos, sem evaluation/, tools/ nem documentos de caracterização. SHA256 do ZIP: `07804f235afc5ec4ca0993e26eced9ca5ff0ceefa3699a4b7311bf9fc4f8e4e5`, conferido com `Get-FileHash`. Os demais hashes estão no protocolo v2 em [EXPERIMENTO.md](EXPERIMENTO.md).
+- **Pendente:** tentativas C1 (Claude Code) e C2 (Codex), cada uma em pasta nova fora do repositório.
 
 ## Caracterização da origem — R6 (11/11/2026)
 
