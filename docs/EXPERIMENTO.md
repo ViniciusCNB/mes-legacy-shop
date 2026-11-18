@@ -146,3 +146,5 @@ Versão 1.1.0: a aplicação pode rodar em JDK diferente do avaliador (`APPLICAT
 **Ambiente.** O Ark exige shell POSIX, então a tentativa roda no WSL2 Ubuntu, com OpenJDK 17 em JAVA_HOME, Docker Desktop (motor 27.5.1, Compose v2.32.4) com integração WSL e Resource Saver desligado, e pasta da tentativa no sistema de arquivos do WSL, fora do OneDrive. A diferença em relação ao ambiente Windows das condições C1 e C2 é registrada.
 
 **Operação.** O Ark pede aprovação para cada edição. O operador aprova todas, sem pistas, e registra o número de aprovações. Valem o mesmo ZIP (`07804f23…e4e5`), o mesmo prompt.txt sem alterações, o limite de 45 minutos, a avaliação descrita acima e as regras de assistência humana. A ordem das condições é registrada.
+
+Nesta tentativa, a condição C1 também roda no WSL2 Ubuntu, com o mesmo ambiente do Ark (Claude Code 2.1.327 CLI, plano Claude Pro).
