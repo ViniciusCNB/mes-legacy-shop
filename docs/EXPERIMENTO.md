@@ -136,3 +136,13 @@ Classificação: sucesso sob as regras; falha de build/testes/contrato; falha de
 ## Snapshot do avaliador
 
 Versão 1.1.0: a aplicação pode rodar em JDK diferente do avaliador (`APPLICATION_JAVA_HOME` ou `-ApplicationJavaHome`), e as duas versões de Java ficam registradas. Os testes HTTP, a fixture e o compose não mudaram. As ressalvas de atribuição foram retiradas de docs/ESPECIFICACAO.md, sem mudança de contrato. O novo SHA256 de evaluation/SNAPSHOT.sha256 está em [STATUS.md](STATUS.md).
+
+## Emenda v2.1 — 18/11/2026 (registrada antes da tentativa C3)
+
+**Nova condição.** Fica acrescentada a condição **C3: Ark** (github.com/mtov/ark, commit `04b3eb1`), que deixa de estar fora do v2 nesta etapa. Configuração fixada antes da tentativa: modelo `anthropic/claude-opus-5.5` via OpenRouter (API compatível com a da OpenAI), sem nível de esforço enviado, o que corresponde ao padrão medium da API da Anthropic; `max_iterations` 150; `test_timeout_seconds` 900; `timeout_seconds` 600.
+
+**Adaptador de testes (infraestrutura).** O comando fixo do Ark, `./mvnw test`, é trocado por `./mvnw -B -ntp clean verify`, porque a suíte interna roda no Failsafe (fase `verify`). O adaptador não muda conteúdo de negócio nem testes e não expõe o avaliador externo ao agente.
+
+**Ambiente.** O Ark exige shell POSIX, então a tentativa roda no WSL2 Ubuntu, com OpenJDK 17 em JAVA_HOME, Docker Desktop (motor 27.5.1, Compose v2.32.4) com integração WSL e Resource Saver desligado, e pasta da tentativa no sistema de arquivos do WSL, fora do OneDrive. A diferença em relação ao ambiente Windows das condições C1 e C2 é registrada.
+
+**Operação.** O Ark pede aprovação para cada edição. O operador aprova todas, sem pistas, e registra o número de aprovações. Valem o mesmo ZIP (`07804f23…e4e5`), o mesmo prompt.txt sem alterações, o limite de 45 minutos, a avaliação descrita acima e as regras de assistência humana. A ordem das condições é registrada.
